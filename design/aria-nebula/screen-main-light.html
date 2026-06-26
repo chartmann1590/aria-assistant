@@ -1,0 +1,141 @@
+<!-- @dsCard group="Screens · Light" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aria Dawn — Main Screen (Light)</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');</style>
+<style>
+  :root{
+    --base:#F7F5F2;--base-1:#EFECE8;
+    --glass-fill:rgba(255,255,255,0.72);--glass-stroke:rgba(0,0,0,0.07);--glass-stroke-bright:rgba(0,0,0,0.12);
+    --shadow:0 4px 24px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04);
+    --text-primary:#1C1A2E;--text-secondary:#6B6880;--text-tertiary:#A8A5C0;
+    --aurora-violet:#5B3FE8;--aurora-teal:#0BABA0;--aurora-magenta:#A02FCC;--aurora-amber:#D97706;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--base);color:var(--text-primary);font-family:'DM Sans',ui-sans-serif,system-ui,sans-serif;display:flex;justify-content:center;padding:40px;}
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 90% 70% at 10% 10%,rgba(91,63,232,.1) 0%,transparent 50%),
+      radial-gradient(ellipse 70% 60% at 85% 5%,rgba(160,47,204,.08) 0%,transparent 45%),
+      radial-gradient(ellipse 80% 70% at 75% 95%,rgba(11,171,160,.08) 0%,transparent 50%);
+    pointer-events:none;animation:aurora-drift 20s ease-in-out infinite alternate;
+  }
+  @keyframes aurora-drift{0%{filter:hue-rotate(0deg);}100%{filter:hue-rotate(12deg);}}
+
+  .phone{
+    position:relative;z-index:2;
+    width:390px;height:844px;
+    background:rgba(247,245,242,0.95);
+    border-radius:44px;overflow:hidden;
+    border:1px solid rgba(0,0,0,0.08);
+    box-shadow:0 48px 140px rgba(0,0,0,0.14),0 8px 32px rgba(0,0,0,0.07),inset 0 1px 0 rgba(255,255,255,.9);
+    display:flex;flex-direction:column;
+  }
+
+  /* STATUS BAR */
+  .status-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 24px 0;font-family:'Sora',system-ui,sans-serif;font-size:15px;font-weight:600;color:var(--text-primary);flex-shrink:0;}
+
+  /* HEADER */
+  .header{display:flex;justify-content:space-between;align-items:center;padding:16px 24px 12px;flex-shrink:0;}
+  .header-title{font-family:'Sora',system-ui,sans-serif;font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--text-primary);}
+  .header-actions{display:flex;gap:4px;}
+  .icon-btn{
+    width:36px;height:36px;border-radius:50%;
+    background:var(--glass-fill);border:1px solid var(--glass-stroke);
+    box-shadow:var(--shadow);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .icon-btn svg{width:18px;height:18px;fill:var(--text-secondary);}
+
+  /* ORB AREA */
+  .orb-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 24px;min-height:0;}
+  .orb{
+    width:180px;height:180px;border-radius:50%;position:relative;flex-shrink:0;
+    background:radial-gradient(circle at 35% 35%,rgba(167,139,250,.95),rgba(91,63,232,.85) 40%,rgba(50,18,140,.9) 75%,rgba(18,6,50,.95));
+    box-shadow:0 20px 60px rgba(91,63,232,.35),0 4px 16px rgba(91,63,232,.2),inset 0 0 40px rgba(91,63,232,.15);
+  }
+  .orb::before{content:'';position:absolute;inset:-24px;border-radius:50%;background:radial-gradient(circle,rgba(91,63,232,.2),transparent 65%);filter:blur(16px);}
+  .orb::after{content:'';position:absolute;width:35%;height:35%;top:14%;left:16%;border-radius:50%;background:rgba(255,255,255,.22);filter:blur(6px);}
+  .orb-ring{position:absolute;inset:-18px;border-radius:50%;border:1px solid rgba(91,63,232,.2);animation:ring-expand 3s ease-out infinite;}
+  .orb-ring-2{animation-delay:1s;}
+  @keyframes ring-expand{0%{transform:scale(.7);opacity:.5;}100%{transform:scale(1.1);opacity:0;}}
+
+  .state-label{font-size:13px;color:var(--text-secondary);margin-top:20px;text-align:center;letter-spacing:.04em;}
+  .state-label span{color:var(--aurora-violet);font-weight:500;}
+
+  /* CONVERSATION */
+  .convo{flex:1;padding:0 16px;display:flex;flex-direction:column;gap:8px;justify-content:flex-end;min-height:0;}
+  .msg{display:flex;max-width:80%;}
+  .msg.user{align-self:flex-end;}
+  .msg.aria{align-self:flex-start;}
+  .bubble{padding:10px 14px;font-size:13px;line-height:1.5;border-radius:18px;}
+  .msg.user .bubble{
+    background:linear-gradient(135deg,rgba(91,63,232,.18),rgba(160,47,204,.12));
+    border:1px solid rgba(91,63,232,.2);border-bottom-right-radius:4px;
+    color:var(--text-primary);
+  }
+  .msg.aria .bubble{
+    background:var(--glass-fill);border:1px solid var(--glass-stroke);
+    box-shadow:var(--shadow);border-bottom-left-radius:4px;color:var(--text-primary);
+    position:relative;
+  }
+  .msg.aria .bubble::before{content:'';position:absolute;left:-1px;top:10px;bottom:10px;width:2px;background:linear-gradient(180deg,var(--aurora-violet),var(--aurora-teal));border-radius:1px;}
+
+  /* INPUT BAR */
+  .input-bar{
+    display:flex;align-items:center;gap:8px;padding:12px 16px;margin:8px 16px 28px;
+    background:var(--glass-fill);border:1px solid var(--glass-stroke);border-radius:999px;
+    box-shadow:var(--shadow);flex-shrink:0;
+  }
+  .input-field{flex:1;background:transparent;border:none;outline:none;font-family:'DM Sans',system-ui,sans-serif;font-size:14px;color:var(--text-primary);}
+  .input-field::placeholder{color:var(--text-tertiary);}
+  .send-btn{width:32px;height:32px;border-radius:50%;border:1px solid rgba(217,119,6,.3);background:rgba(217,119,6,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .send-btn svg{width:14px;height:14px;fill:var(--aurora-amber);}
+  .mic-btn{
+    width:40px;height:40px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--aurora-violet),var(--aurora-magenta));
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 16px rgba(91,63,232,.4);
+  }
+  .mic-btn svg{width:18px;height:18px;fill:#fff;}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status-bar"><span>9:41</span></div>
+
+  <div class="header">
+    <div class="header-title">Aria</div>
+    <div class="header-actions">
+      <div class="icon-btn"><svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/></svg></div>
+      <div class="icon-btn"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm4.24 16L12 15.45 7.77 18l1.12-4.81-3.73-3.23 4.92-.42L12 5l1.92 4.53 4.92.42-3.73 3.23L16.23 18z"/></svg></div>
+      <div class="icon-btn"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></div>
+    </div>
+  </div>
+
+  <div class="orb-area">
+    <div style="position:relative;display:flex;align-items:center;justify-content:center;width:220px;height:220px;">
+      <div class="orb-ring"></div><div class="orb-ring orb-ring-2"></div>
+      <div class="orb"></div>
+    </div>
+    <div class="state-label">Tap mic or type below · <span>Ready</span></div>
+  </div>
+
+  <div class="convo">
+    <div class="msg user"><div class="bubble">What's the weather today?</div></div>
+    <div class="msg aria"><div class="bubble">72°F and partly cloudy. High of 78°F with a light northwest breeze.</div></div>
+    <div class="msg user"><div class="bubble">Set a 10-minute timer</div></div>
+    <div class="msg aria"><div class="bubble">Done — timer set for 10 minutes.</div></div>
+  </div>
+
+  <div class="input-bar">
+    <input class="input-field" type="text" placeholder="Type a message…" readonly>
+    <button class="send-btn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+    <button class="mic-btn"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.95-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.05 7.44-7 7.93V19h3v2H9v-2h2v-3.07z"/></svg></button>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aria Nebula — Controls</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap');</style>
+<style>
+  :root {
+    --base:#06060B;--glass-fill:rgba(255,255,255,0.05);--glass-stroke:rgba(255,255,255,0.09);
+    --glass-stroke-bright:rgba(255,255,255,0.16);--text-primary:#F0EFFE;--text-secondary:#9896B8;
+    --aurora-violet:#7C5CFF;--aurora-teal:#22D3C5;--aurora-magenta:#C04AE0;--aurora-amber:#F59E0B;
+    --radius-full:999px;--radius-lg:24px;--radius-md:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--base);color:var(--text-primary);font-family:'DM Sans',sans-serif;padding:48px 40px;}
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 20%,rgba(124,92,255,.18) 0%,transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 15%,rgba(192,74,224,.14) 0%,transparent 55%),
+      radial-gradient(ellipse 70% 60% at 70% 85%,rgba(34,211,197,.12) 0%,transparent 60%);
+    pointer-events:none;
+  }
+  .page{position:relative;z-index:1;}
+  h2{font-family:'Sora',sans-serif;font-size:13px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.12em;margin:0 0 20px;}
+  .section{margin-bottom:48px;}
+  .row{display:flex;flex-wrap:wrap;gap:24px;align-items:center;}
+  .col{display:flex;flex-direction:column;gap:16px;}
+  .label{font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.08em;}
+
+  /* ── BUTTONS ── */
+  .btn {
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:12px 24px;border-radius:var(--radius-full);border:none;
+    font-family:'Sora',sans-serif;font-size:14px;font-weight:600;letter-spacing:.02em;
+    cursor:pointer;transition:all .2s;
+  }
+  .btn-primary {
+    background:linear-gradient(135deg,var(--aurora-violet),var(--aurora-magenta));
+    color:#fff;box-shadow:0 0 24px rgba(124,92,255,.4);
+  }
+  .btn-primary:hover{box-shadow:0 0 36px rgba(124,92,255,.55);transform:translateY(-1px);}
+
+  .btn-ghost {
+    background:rgba(255,255,255,.05);
+    border:1px solid var(--glass-stroke-bright);
+    color:var(--text-primary);
+  }
+  .btn-ghost:hover{background:rgba(255,255,255,.09);}
+
+  .btn-teal {
+    background:linear-gradient(135deg,var(--aurora-teal),#1AAFA3);
+    color:#06060B;box-shadow:0 0 24px rgba(34,211,197,.35);
+  }
+  .btn-danger{background:rgba(232,69,69,.2);border:1px solid rgba(232,69,69,.4);color:#F87171;}
+
+  .btn-sm{padding:8px 16px;font-size:12px;}
+  .btn-lg{padding:16px 36px;font-size:16px;letter-spacing:.04em;}
+
+  .btn:disabled{opacity:.35;cursor:not-allowed;transform:none;}
+
+  /* ── TEXT FIELD ── */
+  .field-wrap{display:flex;gap:8px;align-items:center;width:320px;}
+  .field {
+    flex:1;
+    background:rgba(255,255,255,.04);
+    border:1px solid var(--glass-stroke);
+    border-radius:var(--radius-full);
+    padding:12px 20px;
+    font-family:'DM Sans',sans-serif;font-size:14px;
+    color:var(--text-primary);outline:none;
+    transition:border-color .2s,background .2s;
+  }
+  .field::placeholder{color:var(--text-secondary);opacity:.6;}
+  .field:focus{border-color:rgba(124,92,255,.6);background:rgba(124,92,255,.06);}
+
+  /* Mic FAB */
+  .mic-fab {
+    width:48px;height:48px;border-radius:50%;flex-shrink:0;border:none;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--aurora-violet),var(--aurora-magenta));
+    box-shadow:0 0 20px rgba(124,92,255,.5);
+    transition:box-shadow .2s,transform .2s;
+  }
+  .mic-fab.listening{
+    background:linear-gradient(135deg,var(--aurora-teal),#1AAFA3);
+    box-shadow:0 0 20px rgba(34,211,197,.5);
+    animation:mic-pulse 1.4s ease-in-out infinite;
+  }
+  .mic-fab svg{width:20px;height:20px;fill:#fff;}
+  @keyframes mic-pulse{0%,100%{box-shadow:0 0 20px rgba(34,211,197,.5);}50%{box-shadow:0 0 32px rgba(34,211,197,.8);}}
+
+  /* Send button */
+  .send-btn{
+    width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;
+    background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);
+    display:flex;align-items:center;justify-content:center;transition:background .2s;
+  }
+  .send-btn svg{width:16px;height:16px;fill:var(--aurora-amber);}
+  .send-btn:hover{background:rgba(245,158,11,.25);}
+
+  /* ── TOGGLE ── */
+  .toggle{width:44px;height:26px;background:rgba(255,255,255,.1);border:1px solid var(--glass-stroke);border-radius:13px;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+  .toggle.on{background:linear-gradient(90deg,var(--aurora-violet),var(--aurora-teal));border-color:transparent;}
+  .toggle::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.4);}
+  .toggle.on::after{left:20px;}
+
+  /* ── SLIDER ── */
+  .slider-wrap{width:260px;}
+  .slider-label{display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:8px;}
+  .slider{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,.1);outline:none;}
+  .slider::-webkit-slider-thumb{
+    -webkit-appearance:none;width:20px;height:20px;border-radius:50%;cursor:pointer;
+    background:linear-gradient(135deg,var(--aurora-violet),var(--aurora-magenta));
+    box-shadow:0 0 10px rgba(124,92,255,.5);
+  }
+  .slider-track{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--aurora-violet) 60%,rgba(255,255,255,.1) 60%);}
+
+  /* ── PROGRESS ── */
+  .progress-wrap{width:260px;}
+  .progress-bar-bg{height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;}
+  .progress-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--aurora-violet),var(--aurora-teal));}
+
+  /* ── SWITCH ROW (Settings) ── */
+  .setting-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 20px;
+    background:var(--glass-fill);border:1px solid var(--glass-stroke);border-radius:var(--radius-md);
+    width:320px;
+  }
+  .setting-label{font-size:14px;}
+  .setting-sub{font-size:12px;color:var(--text-secondary);margin-top:2px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="section">
+    <h2>Buttons</h2>
+    <div class="row">
+      <div class="col">
+        <span class="label">Primary</span>
+        <button class="btn btn-lg btn-primary">Get Started</button>
+        <button class="btn btn-primary">Subscribe Monthly</button>
+        <button class="btn btn-sm btn-primary">Next</button>
+      </div>
+      <div class="col">
+        <span class="label">Ghost / Outline</span>
+        <button class="btn btn-ghost">Restore Purchases</button>
+        <button class="btn btn-sm btn-ghost">Preview Voice</button>
+        <button class="btn btn-sm btn-ghost" disabled>Skip</button>
+      </div>
+      <div class="col">
+        <span class="label">Accent</span>
+        <button class="btn btn-teal">Allow Microphone</button>
+        <button class="btn btn-sm btn-danger">Grant Permission</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Text Field + Mic</h2>
+    <div class="col">
+      <span class="label">Idle</span>
+      <div class="field-wrap">
+        <input class="field" type="text" placeholder="Type a message…">
+        <button class="send-btn">
+          <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+        <button class="mic-fab">
+          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.95-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.05 7.44-7 7.93V19h3v2H9v-2h2v-3.07z"/></svg>
+        </button>
+      </div>
+      <span class="label" style="margin-top:8px">Listening</span>
+      <div class="field-wrap">
+        <input class="field" type="text" style="border-color:rgba(34,211,197,.6);background:rgba(34,211,197,.06);" placeholder="Listening…">
+        <button class="mic-fab listening">
+          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.95-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.05 7.44-7 7.93V19h3v2H9v-2h2v-3.07z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Toggle + Setting Row</h2>
+    <div class="col">
+      <div class="setting-row">
+        <div><div class="setting-label">Wake Word</div><div class="setting-sub">Say "Hey Aria" to activate</div></div>
+        <div class="toggle on"></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Temperature Unit</div><div class="setting-sub">For weather results</div></div>
+        <div class="toggle"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Slider</h2>
+    <div class="col">
+      <div class="slider-wrap">
+        <div class="slider-label"><span>Wake Sensitivity</span><span>0.7</span></div>
+        <input class="slider" type="range" min="0" max="100" value="70">
+      </div>
+      <div class="slider-wrap">
+        <div class="slider-label"><span>TTS Speed</span><span>1.0×</span></div>
+        <input class="slider" type="range" min="0" max="100" value="40">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Progress Bar (Download)</h2>
+    <div class="col">
+      <div class="progress-wrap">
+        <div class="slider-label"><span>Downloading Gemma 4</span><span>67%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:67%"></div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aria — Your Private AI Assistant</title>
+<meta name="description" content="Aria is a fully on-device AI voice assistant for Android. No cloud. No tracking. 100% private." />
+<meta property="og:title" content="Aria — Your Private AI Assistant" />
+<meta property="og:description" content="Fully on-device AI. No cloud. No tracking. 100% private." />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --base:    #06060B;
+  --base1:   #0E0E18;
+  --base2:   #16162A;
+  --violet:  #7C5CFF;
+  --magenta: #C04AE0;
+  --teal:    #22D3C5;
+  --lavender:#A78BFA;
+  --amber:   #F59E0B;
+  --txt:     #F0EFFE;
+  --txt2:    #9896B8;
+  --txt3:    #5E5C80;
+  --glass:   rgba(255,255,255,0.045);
+  --stroke:  rgba(255,255,255,0.09);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--base);
+  color: var(--txt);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── Aurora mesh background ──────────────────────────────────────── */
+.aurora {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(124,92,255,.18) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 50% at 85% 10%, rgba(192,74,224,.13) 0%, transparent 60%),
+    radial-gradient(ellipse 75% 55% at 75% 85%, rgba(34,211,197,.14) 0%, transparent 60%);
+  animation: drift 20s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(-2%, 1%) scale(1.03); }
+}
+
+/* ── Layout ──────────────────────────────────────────────────────── */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+section { position: relative; z-index: 1; }
+
+/* ── Nav ─────────────────────────────────────────────────────────── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  background: rgba(6,6,11,.8);
+  border-bottom: 1px solid var(--stroke);
+  padding: 16px 0;
+}
+.nav-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 1100px; margin: 0 auto; padding: 0 24px;
+}
+.nav-logo {
+  font-family: 'Sora', sans-serif; font-weight: 600; font-size: 1.25rem;
+  background: linear-gradient(90deg, var(--violet), var(--teal));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  text-decoration: none;
+}
+.nav-links { display: flex; gap: 32px; list-style: none; }
+.nav-links a {
+  color: var(--txt2); text-decoration: none; font-size: .9rem;
+  transition: color .2s;
+}
+.nav-links a:hover { color: var(--txt); }
+.nav-cta {
+  background: linear-gradient(135deg, var(--violet), var(--magenta));
+  color: #fff; border: none; border-radius: 999px;
+  padding: 9px 22px; font-family: 'DM Sans', sans-serif; font-size: .875rem;
+  font-weight: 500; cursor: pointer; text-decoration: none;
+  transition: opacity .2s, transform .15s;
+}
+.nav-cta:hover { opacity: .88; transform: translateY(-1px); }
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.hero {
+  min-height: 92vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 100px 24px 80px;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--glass); border: 1px solid var(--stroke);
+  border-radius: 999px; padding: 6px 16px; margin-bottom: 28px;
+  font-size: .8rem; color: var(--teal); letter-spacing: .04em; text-transform: uppercase;
+}
+.hero-eyebrow span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+
+.hero h1 {
+  font-family: 'Sora', sans-serif; font-size: clamp(2.6rem, 6vw, 5rem);
+  font-weight: 700; line-height: 1.1; letter-spacing: -.02em;
+  margin-bottom: 22px;
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--violet) 0%, var(--magenta) 50%, var(--teal) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero p {
+  font-size: clamp(1rem, 2vw, 1.2rem); color: var(--txt2);
+  max-width: 580px; margin: 0 auto 40px;
+}
+.hero-actions { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--violet), var(--magenta));
+  color: #fff; border-radius: 999px; padding: 14px 32px;
+  font-size: 1rem; font-weight: 500; text-decoration: none; font-family: 'DM Sans',sans-serif;
+  transition: transform .15s, box-shadow .2s;
+  box-shadow: 0 0 32px rgba(124,92,255,.25);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 48px rgba(124,92,255,.4); }
+.btn-ghost {
+  color: var(--txt); border: 1px solid var(--stroke); border-radius: 999px;
+  padding: 13px 28px; font-size: 1rem; font-weight: 500; text-decoration: none;
+  font-family: 'DM Sans',sans-serif; background: var(--glass);
+  transition: border-color .2s, background .2s;
+}
+.btn-ghost:hover { border-color: rgba(124,92,255,.5); background: rgba(124,92,255,.08); }
+
+/* Orb */
+.orb-wrap { margin-top: 70px; position: relative; }
+.orb {
+  width: 160px; height: 160px; border-radius: 50%; margin: 0 auto;
+  background: radial-gradient(circle at 35% 32%, rgba(255,255,255,.22) 0%, #7C5CFF 28%, #4B2FCC 65%, #0a0520 100%);
+  box-shadow: 0 0 60px rgba(124,92,255,.4), 0 0 120px rgba(124,92,255,.15);
+  animation: breathe 3s ease-in-out infinite;
+  position: relative;
+}
+.orb::after {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  width: 18%; height: 18%; transform: translate(-62%, -68%);
+  border-radius: 50%; background: rgba(255,255,255,.18);
+}
+@keyframes breathe {
+  0%,100%{transform:scale(1);box-shadow:0 0 60px rgba(124,92,255,.4),0 0 120px rgba(124,92,255,.15)}
+  50%{transform:scale(1.025);box-shadow:0 0 80px rgba(124,92,255,.55),0 0 160px rgba(124,92,255,.22)}
+}
+.ring {
+  position: absolute; top: 50%; left: 50%; border-radius: 50%;
+  border: 1px solid rgba(124,92,255,.3); transform: translate(-50%,-50%);
+  animation: ring-expand 2.6s ease-out infinite;
+}
+.ring:nth-child(2) { animation-delay: 1.3s; }
+@keyframes ring-expand {
+  0%   { width: 160px; height: 160px; opacity: .45; }
+  100% { width: 280px; height: 280px; opacity: 0; }
+}
+
+/* ── Privacy Banner ───────────────────────────────────────────────── */
+.privacy-banner {
+  padding: 40px 0;
+  display: flex; justify-content: center;
+}
+.privacy-banner-inner {
+  background: linear-gradient(135deg, rgba(124,92,255,.12) 0%, rgba(34,211,197,.08) 100%);
+  border: 1px solid rgba(124,92,255,.2);
+  border-radius: 20px; padding: 24px 40px;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap; justify-content: center;
+}
+.privacy-stat { text-align: center; }
+.privacy-stat .val {
+  font-family: 'Sora',sans-serif; font-size: 1.5rem; font-weight: 700;
+  background: linear-gradient(90deg, var(--violet), var(--teal));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.privacy-stat .lbl { font-size: .78rem; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; }
+.privacy-div { width: 1px; height: 40px; background: var(--stroke); }
+
+/* ── Features ─────────────────────────────────────────────────────── */
+.features { padding: 100px 0; }
+.section-label {
+  text-align: center; font-size: .75rem; color: var(--violet);
+  letter-spacing: .12em; text-transform: uppercase; margin-bottom: 12px;
+}
+.section-title {
+  font-family: 'Sora',sans-serif; font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 600; text-align: center; margin-bottom: 16px; line-height: 1.2;
+}
+.section-sub { color: var(--txt2); text-align: center; max-width: 520px; margin: 0 auto 60px; font-size: 1.05rem; }
+
+.features-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;
+}
+.feature-card {
+  background: var(--glass); border: 1px solid var(--stroke);
+  border-radius: 20px; padding: 28px;
+  transition: border-color .25s, transform .2s;
+}
+.feature-card:hover { border-color: rgba(124,92,255,.3); transform: translateY(-3px); }
+.feat-icon {
+  width: 44px; height: 44px; border-radius: 12px; margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+}
+.feat-violet { background: rgba(124,92,255,.15); }
+.feat-teal   { background: rgba(34,211,197,.12); }
+.feat-amber  { background: rgba(245,158,11,.12); }
+.feat-magenta{ background: rgba(192,74,224,.12); }
+.feature-card h3 { font-family: 'Sora',sans-serif; font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+.feature-card p  { font-size: .9rem; color: var(--txt2); line-height: 1.55; }
+
+/* ── How it works ─────────────────────────────────────────────────── */
+.how { padding: 100px 0; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 0; }
+.step {
+  padding: 32px 28px; position: relative;
+}
+.step:not(:last-child)::after {
+  content: '→'; position: absolute; right: -12px; top: 50%;
+  transform: translateY(-50%); color: var(--txt3); font-size: 1.2rem;
+}
+.step-num {
+  font-family: 'Sora',sans-serif; font-size: 2.5rem; font-weight: 700;
+  background: linear-gradient(135deg, var(--violet), var(--teal));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  line-height: 1; margin-bottom: 12px;
+}
+.step h3 { font-family: 'Sora',sans-serif; font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+.step p  { font-size: .88rem; color: var(--txt2); }
+
+/* ── Pricing ──────────────────────────────────────────────────────── */
+.pricing { padding: 100px 0; }
+.pricing-grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+  gap: 24px; max-width: 720px; margin: 0 auto;
+}
+.plan {
+  background: var(--glass); border: 1px solid var(--stroke);
+  border-radius: 24px; padding: 36px 32px;
+}
+.plan.featured {
+  background: linear-gradient(145deg, rgba(124,92,255,.12), rgba(34,211,197,.06));
+  border-color: rgba(124,92,255,.35);
+  position: relative;
+}
+.plan-badge {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  background: linear-gradient(90deg, var(--violet), var(--magenta));
+  color: #fff; font-size: .7rem; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; border-radius: 999px; padding: 5px 16px; white-space: nowrap;
+}
+.plan-name { font-family: 'Sora',sans-serif; font-size: .85rem; color: var(--txt2); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .08em; }
+.plan-price { font-family: 'Sora',sans-serif; font-size: 2.8rem; font-weight: 700; line-height: 1; margin-bottom: 4px; }
+.plan-price sup { font-size: 1.4rem; vertical-align: super; }
+.plan-period { font-size: .85rem; color: var(--txt3); margin-bottom: 28px; }
+.plan-features { list-style: none; margin-bottom: 32px; display: flex; flex-direction: column; gap: 10px; }
+.plan-features li { font-size: .9rem; display: flex; gap: 10px; align-items: flex-start; }
+.plan-features li::before { content: '✓'; color: var(--teal); font-weight: 700; flex-shrink: 0; }
+.plan-features li.locked::before { content: '✦'; color: var(--violet); }
+.plan-cta {
+  width: 100%; border-radius: 999px; padding: 13px; font-family: 'DM Sans',sans-serif;
+  font-size: .95rem; font-weight: 500; cursor: pointer; text-decoration: none;
+  display: block; text-align: center; transition: opacity .2s;
+}
+.plan-cta-ghost { background: transparent; border: 1px solid var(--stroke); color: var(--txt); }
+.plan-cta-full  { background: linear-gradient(135deg, var(--violet), var(--magenta)); border: none; color: #fff; }
+.plan-cta:hover { opacity: .85; }
+
+/* ── FAQ ──────────────────────────────────────────────────────────── */
+.faq-section { padding: 100px 0; }
+.faq-list { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+details {
+  background: var(--glass); border: 1px solid var(--stroke);
+  border-radius: 16px; overflow: hidden; transition: border-color .2s;
+}
+details[open] { border-color: rgba(124,92,255,.3); }
+summary {
+  padding: 20px 24px; cursor: pointer; list-style: none;
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: 'Sora',sans-serif; font-size: .95rem; font-weight: 500;
+}
+summary::-webkit-details-marker { display: none; }
+summary::after {
+  content: '+'; font-size: 1.3rem; color: var(--violet);
+  transition: transform .2s; flex-shrink: 0;
+}
+details[open] summary::after { transform: rotate(45deg); }
+.faq-body { padding: 0 24px 20px; color: var(--txt2); font-size: .92rem; line-height: 1.65; }
+.faq-body a { color: var(--violet); }
+
+/* ── Download CTA ─────────────────────────────────────────────────── */
+.download { padding: 120px 0; text-align: center; }
+.download-card {
+  background: linear-gradient(145deg, rgba(124,92,255,.14), rgba(192,74,224,.08), rgba(34,211,197,.06));
+  border: 1px solid rgba(124,92,255,.25); border-radius: 32px;
+  padding: 72px 40px; max-width: 700px; margin: 0 auto;
+}
+.download h2 { font-family: 'Sora',sans-serif; font-size: clamp(1.8rem,4vw,2.6rem); font-weight: 700; margin-bottom: 16px; }
+.download p { color: var(--txt2); margin-bottom: 36px; font-size: 1.05rem; }
+.store-badges { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.store-badge {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,.06); border: 1px solid var(--stroke);
+  border-radius: 14px; padding: 12px 20px; text-decoration: none; color: var(--txt);
+  transition: border-color .2s, background .2s;
+}
+.store-badge:hover { border-color: rgba(124,92,255,.4); background: rgba(124,92,255,.08); }
+.store-badge svg { width: 24px; height: 24px; }
+.store-badge-text { text-align: left; }
+.store-badge-text small { display: block; font-size: .68rem; color: var(--txt3); text-transform: uppercase; letter-spacing: .06em; }
+.store-badge-text strong { font-size: .95rem; font-family: 'Sora',sans-serif; }
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--stroke); padding: 48px 0 32px; position: relative; z-index: 1;
+}
+.footer-inner {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  flex-wrap: wrap; gap: 32px; margin-bottom: 40px;
+}
+.footer-brand p { color: var(--txt3); font-size: .85rem; margin-top: 8px; max-width: 260px; }
+.footer-links h4 { font-family: 'Sora',sans-serif; font-size: .8rem; color: var(--txt3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 14px; }
+.footer-links ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.footer-links a { color: var(--txt2); text-decoration: none; font-size: .88rem; transition: color .2s; }
+.footer-links a:hover { color: var(--txt); }
+.footer-bottom { border-top: 1px solid var(--stroke); padding-top: 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+.footer-bottom p { font-size: .8rem; color: var(--txt3); }
+.footer-bottom a { color: var(--txt3); text-decoration: none; }
+.footer-bottom a:hover { color: var(--txt); }
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  .steps { grid-template-columns: 1fr; }
+  .step:not(:last-child)::after { content: '↓'; right: auto; left: 28px; top: auto; bottom: -20px; transform: none; }
+  .privacy-div { display: none; }
+  .footer-inner { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<div class="aurora"></div>
+
+<!-- ── Nav ── -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">Aria</a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="privacy.html">Privacy</a></li>
+    </ul>
+    <a class="nav-cta" href="#download">Get Aria</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-eyebrow"><span></span> Now available on Android</div>
+  <h1>AI that lives<br/><em>on your phone</em></h1>
+  <p>Aria is a fully on-device voice assistant powered by Gemma 4. No cloud. No tracking. Everything runs privately on your device.</p>
+  <div class="hero-actions">
+    <a class="btn-primary" href="#download">Download Free</a>
+    <a class="btn-ghost" href="#features">See features</a>
+  </div>
+  <div class="orb-wrap">
+    <div class="orb">
+      <div class="ring"></div>
+      <div class="ring"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Privacy Banner ── -->
+<section>
+  <div class="container">
+    <div class="privacy-banner">
+      <div class="privacy-banner-inner">
+        <div class="privacy-stat"><div class="val">0</div><div class="lbl">Data sent to cloud</div></div>
+        <div class="privacy-div"></div>
+        <div class="privacy-stat"><div class="val">100%</div><div class="lbl">On-device inference</div></div>
+        <div class="privacy-div"></div>
+        <div class="privacy-stat"><div class="val">0</div><div class="lbl">Third-party trackers</div></div>
+        <div class="privacy-div"></div>
+        <div class="privacy-stat"><div class="val">Open</div><div class="lbl">Source code</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ── -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-label">What Aria can do</div>
+    <h2 class="section-title">A full assistant. Zero compromise.</h2>
+    <p class="section-sub">Everything a smart assistant should do — calls, messages, search, alarms, and more — without your data leaving your device.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feat-icon feat-violet">🎙️</div>
+        <h3>Wake Word</h3>
+        <p>Say "Hey Aria" from anywhere. The always-listening wake word detector runs entirely on-device using OpenWakeWord.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon feat-teal">🧠</div>
+        <h3>Gemma 4 On-Device LLM</h3>
+        <p>Powered by Google's Gemma 4 model via LiteRT. Responses are generated locally — no API key, no subscription for inference.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon feat-amber">🔊</div>
+        <h3>Natural Voice (Piper TTS)</h3>
+        <p>High-quality text-to-speech via Piper running locally. Choose from multiple voices, adjust speed and pitch.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon feat-magenta">📱</div>
+        <h3>Phone & Messaging</h3>
+        <p>Make calls, send SMS, read your notifications — all by voice. Premium features, protected by runtime permissions you control.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon feat-violet">🌐</div>
+        <h3>Web Search</h3>
+        <p>Aria can search the web and Wikipedia when you need current information — with results read back to you naturally.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon feat-teal">🗓️</div>
+        <h3>Calendar & Reminders</h3>
+        <p>Create events, set alarms, and manage reminders with a single voice command. Syncs with your on-device calendar.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon feat-amber">📍</div>
+        <h3>Location & Navigation</h3>
+        <p>Ask for directions, local weather, or nearby places. Location is used in-context and never stored or transmitted.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon feat-magenta">⚙️</div>
+        <h3>Settings Control</h3>
+        <p>Dim the screen, toggle Wi-Fi, adjust volume — full system control via natural voice commands.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How it works ── -->
+<section class="how">
+  <div class="container">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Simple to use. Sophisticated inside.</h2>
+    <p class="section-sub">From wake word to response in under a second — all on your phone.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Say "Hey Aria"</h3>
+        <p>The wake word listener runs silently in the background, consuming minimal battery.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Aria listens</h3>
+        <p>Whisper-based STT transcribes your voice to text entirely on-device.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Gemma 4 processes</h3>
+        <p>The on-device LLM understands your intent and generates a response.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <h3>Aria speaks back</h3>
+        <p>Piper TTS converts the response to natural speech — no cloud round-trip.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Pricing ── -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-label">Plans</div>
+    <h2 class="section-title">Start free. Upgrade anytime.</h2>
+    <p class="section-sub">The core assistant is completely free. Premium unlocks advanced capabilities.</p>
+    <div class="pricing-grid">
+      <div class="plan">
+        <div class="plan-name">Free</div>
+        <div class="plan-price"><sup>$</sup>0</div>
+        <div class="plan-period">forever</div>
+        <ul class="plan-features">
+          <li>General Q&amp;A with Gemma 4</li>
+          <li>"Hey Aria" wake word</li>
+          <li>Timers &amp; alarms</li>
+          <li>Web search &amp; Wikipedia</li>
+          <li>Media playback control</li>
+          <li>App launcher</li>
+          <li>1 TTS voice (Amy)</li>
+          <li>Read SMS inbox</li>
+          <li>Dismiss notifications</li>
+        </ul>
+        <a class="plan-cta plan-cta-ghost" href="#download">Download</a>
+      </div>
+      <div class="plan featured">
+        <div class="plan-badge">Most Popular</div>
+        <div class="plan-name">Premium</div>
+        <div class="plan-price"><sup>$</sup>1.67</div>
+        <div class="plan-period">per month, billed $19.99/year · or $2.99/mo</div>
+        <ul class="plan-features">
+          <li>Everything in Free</li>
+          <li class="locked">5 additional premium voices</li>
+          <li class="locked">Gemma E4B enhanced model</li>
+          <li class="locked">Phone calls</li>
+          <li class="locked">Send SMS</li>
+          <li class="locked">Device settings control</li>
+          <li class="locked">Calendar event creation</li>
+          <li class="locked">Read &amp; reply to notifications</li>
+          <li class="locked">Camera control</li>
+          <li class="locked">Screen reader &amp; UI control</li>
+        </ul>
+        <a class="plan-cta plan-cta-full" href="#download">Get Premium</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FAQ ── -->
+<section class="faq-section" id="faq">
+  <div class="container">
+    <div class="section-label">FAQ</div>
+    <h2 class="section-title">Common questions</h2>
+    <p class="section-sub">Everything you need to know about Aria.</p>
+    <div class="faq-list">
+      <details>
+        <summary>Does Aria send my voice or conversations to the cloud?</summary>
+        <div class="faq-body">No. All speech recognition, language model inference, and text-to-speech happen entirely on your device. Your audio is never transmitted to any server. See our <a href="privacy.html">Privacy Policy</a> for full details.</div>
+      </details>
+      <details>
+        <summary>Which Android devices are supported?</summary>
+        <div class="faq-body">Aria requires Android 8.0 (API 26) or higher. For the best experience — including GPU-accelerated Gemma 4 inference — a device with at least 6 GB RAM is recommended. Pixel 6 and newer phones work especially well.</div>
+      </details>
+      <details>
+        <summary>How much storage does Aria use?</summary>
+        <div class="faq-body">The app itself is around 80 MB. The default Gemma 4 model is approximately 2.5 GB and is downloaded on first launch. The enhanced Gemma E4B model (Premium) is around 4 GB. You can delete unused models from Settings at any time.</div>
+      </details>
+      <details>
+        <summary>Does Aria work without an internet connection?</summary>
+        <div class="faq-body">Yes — all core features work fully offline once the model is downloaded. An internet connection is only needed for web search, Wikipedia lookups, and downloading additional voice packs.</div>
+      </details>
+      <details>
+        <summary>Why does Aria need accessibility permissions?</summary>
+        <div class="faq-body">The optional Accessibility Service lets Aria interact with other apps on your behalf — for example, "tap the Send button in WhatsApp" or "scroll down in Maps." You grant this permission explicitly in Android Settings; Aria never activates it automatically. This permission is not required for core functionality.</div>
+      </details>
+      <details>
+        <summary>Why does Aria need notification access?</summary>
+        <div class="faq-body">Notification access lets you ask things like "What notification did I just get?" or "Read my last WhatsApp message" hands-free. This is an optional permission — the assistant works without it. Access is only used when you actively ask Aria about your notifications.</div>
+      </details>
+      <details>
+        <summary>Can I cancel my Premium subscription?</summary>
+        <div class="faq-body">Yes. Cancel anytime through the Google Play Store under Subscriptions. You retain access until the end of your billing period. We do not offer refunds for partial billing periods, in line with Google Play's policies.</div>
+      </details>
+      <details>
+        <summary>Is Aria open source?</summary>
+        <div class="faq-body">Yes. The full source code is available on <a href="https://github.com/chartmann1590/aria-assistant">GitHub</a> under the Apache 2.0 license. Contributions are welcome.</div>
+      </details>
+      <details>
+        <summary>How does battery usage work?</summary>
+        <div class="faq-body">The wake word listener uses OpenWakeWord on the CPU and consumes approximately 2–5% battery per hour depending on your device. GPU inference for responses is only active while Aria is generating a reply. You can disable the wake word in Settings and trigger Aria manually to minimise battery use.</div>
+      </details>
+      <details>
+        <summary>What data does Aria collect for billing?</summary>
+        <div class="faq-body">Premium subscriptions are processed entirely through Google Play Billing. Aria never sees your payment information. The only data we receive is your anonymised Play purchase token confirming subscription status.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ── Download CTA ── -->
+<section class="download" id="download">
+  <div class="container">
+    <div class="download-card">
+      <h2>Your AI. Your phone. Your rules.</h2>
+      <p>Download Aria free from the Google Play Store and start using it in minutes.</p>
+      <div class="store-badges">
+        <a class="store-badge" href="#" title="Google Play — coming soon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.18 1L13.35 11.17L3.18 21.34L3 21.19V1.15L3.18 1ZM14.89 9.64L5.35 1.5L17.5 8.83L14.89 9.64ZM5.35 22.5L14.89 14.36L17.5 15.17L5.35 22.5ZM18.5 10.37L20.97 11.79C21.64 12.17 21.64 12.83 20.97 13.21L18.5 14.63L15.72 12L18.5 10.37Z" fill="#9896B8"/></svg>
+          <div class="store-badge-text">
+            <small>Get it on</small>
+            <strong>Google Play</strong>
+          </div>
+        </a>
+        <a class="store-badge" href="https://github.com/chartmann1590/aria-assistant/releases" title="Download APK from GitHub">
+          <svg viewBox="0 0 24 24" fill="#9896B8" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.071 1.531 1.031 1.531 1.031.892 1.529 2.341 1.087 2.91.832.091-.647.349-1.087.635-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836a9.59 9.59 0 012.504.337c1.909-1.294 2.748-1.025 2.748-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+          <div class="store-badge-text">
+            <small>Download</small>
+            <strong>APK (GitHub)</strong>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a class="nav-logo" href="/" style="font-size:1.1rem">Aria</a>
+        <p>A fully private, on-device AI voice assistant for Android. Open source under Apache 2.0.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="#download">Download</a></li>
+          <li><a href="https://github.com/chartmann1590/aria-assistant">GitHub</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="privacy.html">Privacy Policy</a></li>
+          <li><a href="terms.html">Terms of Service</a></li>
+          <li><a href="mailto:charles.h.hartmann1@gmail.com">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2025 Aria. Released under the <a href="https://github.com/chartmann1590/aria-assistant/blob/main/LICENSE">Apache 2.0 License</a>.</p>
+      <p><a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms</a></p>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

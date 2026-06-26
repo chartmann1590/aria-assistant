@@ -1,0 +1,223 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aria Nebula — Orb</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap');</style>
+<style>
+  :root {
+    --base: #06060B; --base-1: #0D0D18;
+    --glass-fill: rgba(255,255,255,0.045); --glass-stroke: rgba(255,255,255,0.09);
+    --text-primary: #F0EFFE; --text-secondary: #9896B8;
+    --state-idle: #7C5CFF; --state-listening: #22D3C5;
+    --state-processing: #A78BFA; --state-speaking: #F59E0B; --state-muted: #4B5060;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--base); color: var(--text-primary); font-family: 'DM Sans', sans-serif; padding: 48px 40px; }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(124,92,255,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 15%, rgba(192,74,224,0.14) 0%, transparent 55%),
+      radial-gradient(ellipse 70% 60% at 70% 85%, rgba(34,211,197,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .page { position: relative; z-index: 1; }
+  h2 { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 500; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 32px; }
+  .orb-grid { display: flex; flex-wrap: wrap; gap: 48px; align-items: flex-start; }
+  .orb-item { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+  .orb-label { font-family: 'Sora', sans-serif; font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: .1em; }
+
+  /* ── THE ORB ── */
+  .orb { position: relative; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+  /* Outer bloom glow */
+  .orb::before {
+    content: ''; position: absolute;
+    border-radius: 50%;
+    filter: blur(32px);
+    opacity: 0.5;
+  }
+  /* Inner shimmer highlight */
+  .orb::after {
+    content: ''; position: absolute;
+    width: 35%; height: 35%;
+    top: 14%; left: 16%;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    filter: blur(8px);
+  }
+
+  /* SIZE */
+  .orb-lg { width: 180px; height: 180px; }
+  .orb-lg::before { width: 240px; height: 240px; }
+  .orb-sm { width: 100px; height: 100px; }
+  .orb-sm::before { width: 140px; height: 140px; }
+
+  /* IDLE — violet nebula */
+  .orb-idle {
+    background: radial-gradient(circle at 35% 35%, rgba(167,139,250,0.95), rgba(124,92,255,0.85) 40%, rgba(76,29,149,0.9) 75%, rgba(30,10,60,0.95));
+    box-shadow: inset 0 0 40px rgba(124,92,255,0.3);
+  }
+  .orb-idle::before { background: radial-gradient(circle, rgba(124,92,255,0.6), transparent 70%); }
+
+  /* LISTENING — teal */
+  .orb-listening {
+    background: radial-gradient(circle at 35% 35%, rgba(110,240,230,0.95), rgba(34,211,197,0.85) 40%, rgba(6,105,100,0.9) 75%, rgba(2,30,28,0.95));
+    box-shadow: inset 0 0 40px rgba(34,211,197,0.3);
+    animation: orb-pulse 1.4s ease-in-out infinite;
+  }
+  .orb-listening::before { background: radial-gradient(circle, rgba(34,211,197,0.65), transparent 70%); }
+
+  /* PROCESSING — lavender swirl */
+  .orb-processing {
+    background: radial-gradient(circle at 35% 35%, rgba(200,180,255,0.95), rgba(167,139,250,0.85) 40%, rgba(109,40,217,0.9) 75%, rgba(40,10,80,0.95));
+    box-shadow: inset 0 0 40px rgba(167,139,250,0.3);
+    animation: orb-rotate 3s linear infinite;
+  }
+  .orb-processing::before { background: radial-gradient(circle, rgba(167,139,250,0.6), transparent 70%); }
+
+  /* SPEAKING — amber */
+  .orb-speaking {
+    background: radial-gradient(circle at 35% 35%, rgba(255,220,100,0.95), rgba(245,158,11,0.85) 40%, rgba(146,64,14,0.9) 75%, rgba(50,20,2,0.95));
+    box-shadow: inset 0 0 40px rgba(245,158,11,0.3);
+    animation: orb-speaking 0.5s ease-in-out infinite alternate;
+  }
+  .orb-speaking::before { background: radial-gradient(circle, rgba(245,158,11,0.65), transparent 70%); }
+
+  /* MUTED — grey */
+  .orb-muted {
+    background: radial-gradient(circle at 35% 35%, rgba(110,115,130,0.9), rgba(75,80,96,0.85) 40%, rgba(30,32,45,0.9) 75%, rgba(10,10,20,0.95));
+    box-shadow: inset 0 0 20px rgba(75,80,96,0.2);
+  }
+  .orb-muted::before { background: radial-gradient(circle, rgba(75,80,96,0.3), transparent 70%); }
+
+  /* Particle specks */
+  .orb .specks {
+    position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
+  }
+  .speck {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    animation: speck-float 4s ease-in-out infinite;
+  }
+  .speck:nth-child(1) { width: 3px; height: 3px; top: 22%; left: 60%; animation-delay: 0s; }
+  .speck:nth-child(2) { width: 2px; height: 2px; top: 65%; left: 25%; animation-delay: -1.2s; }
+  .speck:nth-child(3) { width: 2px; height: 2px; top: 40%; left: 75%; animation-delay: -2.5s; }
+  .speck:nth-child(4) { width: 3px; height: 3px; top: 75%; left: 65%; animation-delay: -0.7s; }
+
+  @keyframes orb-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  @keyframes orb-rotate {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(30deg); }
+  }
+  @keyframes orb-speaking {
+    from { transform: scale(1); }
+    to { transform: scale(1.05); }
+  }
+  @keyframes speck-float {
+    0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
+    50% { transform: translateY(-6px) scale(1.2); opacity: 1; }
+  }
+
+  /* Ring variant (IDLE micro-animation) */
+  .orb-ring-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+  .ring {
+    position: absolute; border-radius: 50%; border: 1px solid;
+    animation: ring-expand 2.5s ease-out infinite;
+    opacity: 0;
+  }
+  .ring-1 { width: 200px; height: 200px; border-color: rgba(124,92,255,0.4); animation-delay: 0s; }
+  .ring-2 { width: 200px; height: 200px; border-color: rgba(124,92,255,0.25); animation-delay: 0.8s; }
+  .ring-3 { width: 200px; height: 200px; border-color: rgba(34,211,197,0.2); animation-delay: 1.6s; }
+  @keyframes ring-expand {
+    0% { transform: scale(0.55); opacity: 0.7; }
+    100% { transform: scale(1.1); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <h2>Aria Orb — All States</h2>
+  <div class="orb-grid">
+
+    <!-- IDLE -->
+    <div class="orb-item">
+      <div class="orb-ring-wrap">
+        <div class="ring ring-1"></div><div class="ring ring-2"></div><div class="ring ring-3"></div>
+        <div class="orb orb-lg orb-idle">
+          <div class="specks">
+            <div class="speck"></div><div class="speck"></div>
+            <div class="speck"></div><div class="speck"></div>
+          </div>
+        </div>
+      </div>
+      <div class="orb-label" style="color:var(--state-idle)">Idle</div>
+    </div>
+
+    <!-- LISTENING -->
+    <div class="orb-item">
+      <div class="orb-ring-wrap">
+        <div class="orb orb-lg orb-listening">
+          <div class="specks">
+            <div class="speck"></div><div class="speck"></div>
+            <div class="speck"></div><div class="speck"></div>
+          </div>
+        </div>
+      </div>
+      <div class="orb-label" style="color:var(--state-listening)">Listening</div>
+    </div>
+
+    <!-- PROCESSING -->
+    <div class="orb-item">
+      <div class="orb-ring-wrap">
+        <div class="orb orb-lg orb-processing">
+          <div class="specks">
+            <div class="speck"></div><div class="speck"></div>
+            <div class="speck"></div><div class="speck"></div>
+          </div>
+        </div>
+      </div>
+      <div class="orb-label" style="color:var(--state-processing)">Processing</div>
+    </div>
+
+    <!-- SPEAKING -->
+    <div class="orb-item">
+      <div class="orb-ring-wrap">
+        <div class="orb orb-lg orb-speaking">
+          <div class="specks">
+            <div class="speck"></div><div class="speck"></div>
+            <div class="speck"></div><div class="speck"></div>
+          </div>
+        </div>
+      </div>
+      <div class="orb-label" style="color:var(--state-speaking)">Speaking</div>
+    </div>
+
+    <!-- MUTED -->
+    <div class="orb-item">
+      <div class="orb orb-lg orb-muted">
+        <div class="specks">
+          <div class="speck" style="opacity:0.2"></div>
+          <div class="speck" style="opacity:0.2"></div>
+        </div>
+      </div>
+      <div class="orb-label" style="color:var(--state-muted)">Muted</div>
+    </div>
+
+  </div>
+
+  <!-- SMALL SIZE -->
+  <h2 style="margin-top:48px;">Small variant (onboarding)</h2>
+  <div class="orb-grid">
+    <div class="orb-item"><div class="orb orb-sm orb-idle"><div class="specks"><div class="speck"></div></div></div><div class="orb-label" style="color:var(--state-idle);font-size:11px">Idle</div></div>
+    <div class="orb-item"><div class="orb orb-sm orb-listening"><div class="specks"><div class="speck"></div></div></div><div class="orb-label" style="color:var(--state-listening);font-size:11px">Listening</div></div>
+    <div class="orb-item"><div class="orb orb-sm orb-processing"><div class="specks"><div class="speck"></div></div></div><div class="orb-label" style="color:var(--state-processing);font-size:11px">Processing</div></div>
+  </div>
+</div>
+</body>
+</html>

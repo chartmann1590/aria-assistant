@@ -1,0 +1,193 @@
+<!-- @dsCard group="Foundation · Light" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aria Dawn — Design Tokens (Light)</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');</style>
+<style>
+  :root {
+    /* ── Base Canvas ── */
+    --base:        #F7F5F2;
+    --base-1:      #EFECE8;
+    --base-2:      #E8E4DE;
+
+    /* ── Glass Surfaces ── */
+    --glass-fill:        rgba(255,255,255,0.72);
+    --glass-fill-hover:  rgba(255,255,255,0.88);
+    --glass-stroke:      rgba(0,0,0,0.07);
+    --glass-stroke-bright: rgba(0,0,0,0.12);
+    --shadow-soft:       0 4px 24px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.05);
+    --shadow-md:         0 8px 32px rgba(0,0,0,0.1), 0 2px 8px rgba(0,0,0,0.06);
+
+    /* ── Aurora Accents (saturated for light bg) ── */
+    --aurora-violet:  #5B3FE8;
+    --aurora-magenta: #A02FCC;
+    --aurora-teal:    #0BABA0;
+    --aurora-lavender:#7B5CF0;
+    --aurora-amber:   #D97706;
+
+    /* ── State Colors ── */
+    --state-idle:       #5B3FE8;
+    --state-listening:  #0BABA0;
+    --state-processing: #7B5CF0;
+    --state-speaking:   #D97706;
+    --state-muted:      #9B99B0;
+
+    /* ── Text ── */
+    --text-primary:   #1C1A2E;
+    --text-secondary: #6B6880;
+    --text-tertiary:  #A8A5C0;
+
+    /* ── Radii / spacing same as dark ── */
+    --radius-sm: 8px; --radius-md: 16px; --radius-lg: 24px; --radius-xl: 36px; --radius-full: 999px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--base);
+    color: var(--text-primary);
+    font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+    font-size: 13px;
+    min-width: 900px;
+    padding: 40px;
+  }
+  /* Soft aurora mesh on light bg */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(91,63,232,0.07) 0%, transparent 55%),
+      radial-gradient(ellipse 60% 50% at 80% 15%, rgba(160,47,204,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse 70% 60% at 70% 85%, rgba(11,171,160,0.06) 0%, transparent 55%);
+    pointer-events: none;
+  }
+
+  .page { position: relative; z-index: 1; }
+  h1 { font-family: 'Sora', ui-rounded, system-ui, sans-serif; font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+  h2 { font-family: 'Sora', ui-rounded, system-ui, sans-serif; font-size: 13px; font-weight: 500; color: var(--text-secondary); margin: 40px 0 16px; text-transform: uppercase; letter-spacing: 0.12em; }
+  .subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 40px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: var(--radius-full); font-size: 11px; font-weight: 600; background: rgba(91,63,232,.1); border: 1px solid rgba(91,63,232,.2); color: var(--aurora-violet); margin-left: 12px; vertical-align: middle; }
+
+  /* AURORA MESH SWATCH */
+  .aurora-swatch {
+    height: 120px; border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-stroke);
+    box-shadow: var(--shadow-soft);
+    background:
+      radial-gradient(ellipse 70% 70% at 20% 30%, rgba(91,63,232,0.28) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 60% at 75% 20%, rgba(160,47,204,0.22) 0%, transparent 55%),
+      radial-gradient(ellipse 65% 65% at 65% 80%, rgba(11,171,160,0.2) 0%, transparent 55%),
+      #EFECE8;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Sora', system-ui, sans-serif; font-size: 13px; color: rgba(28,26,46,0.5);
+  }
+
+  .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  .swatch { border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--glass-stroke); box-shadow: var(--shadow-soft); }
+  .swatch-color { height: 64px; width: 100%; }
+  .swatch-info { padding: 8px 10px; background: var(--glass-fill); }
+  .swatch-name { font-weight: 500; font-size: 12px; color: var(--text-primary); }
+  .swatch-hex { font-size: 11px; color: var(--text-secondary); margin-top: 2px; font-family: 'Courier New', monospace; }
+
+  /* TYPE SCALE */
+  .type-scale { display: flex; flex-direction: column; gap: 20px; }
+  .type-row { display: flex; align-items: baseline; gap: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--glass-stroke); }
+  .type-meta { width: 200px; flex-shrink: 0; color: var(--text-secondary); font-size: 11px; line-height: 1.6; }
+  .type-meta strong { display: block; color: var(--text-tertiary); font-weight: 500; font-size: 10px; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 4px; }
+  .t-display    { font-family: 'Sora', system-ui, sans-serif; font-size: 48px; font-weight: 600; line-height: 1.1; color: var(--text-primary); }
+  .t-headline-l { font-family: 'Sora', system-ui, sans-serif; font-size: 32px; font-weight: 600; line-height: 1.2; }
+  .t-headline-m { font-family: 'Sora', system-ui, sans-serif; font-size: 24px; font-weight: 600; line-height: 1.25; }
+  .t-title      { font-family: 'Sora', system-ui, sans-serif; font-size: 18px; font-weight: 500; line-height: 1.3; }
+  .t-body-l     { font-family: 'DM Sans', system-ui, sans-serif; font-size: 16px; font-weight: 400; line-height: 1.5; }
+  .t-body-m     { font-family: 'DM Sans', system-ui, sans-serif; font-size: 14px; font-weight: 400; line-height: 1.5; }
+  .t-label      { font-family: 'DM Sans', system-ui, sans-serif; font-size: 13px; font-weight: 500; line-height: 1.4; text-transform: uppercase; letter-spacing: .06em; }
+  .t-caption    { font-family: 'DM Sans', system-ui, sans-serif; font-size: 11px; font-weight: 400; line-height: 1.4; color: var(--text-secondary); }
+
+  /* SPACING / RADIUS same structure */
+  .spacing-grid { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+  .sp-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .sp-bar { background: linear-gradient(135deg, var(--aurora-violet), var(--aurora-teal)); border-radius: 3px; width: 40px; }
+  .sp-label { font-size: 11px; color: var(--text-secondary); font-family: monospace; }
+  .radius-grid { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .r-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .r-box { width: 56px; height: 56px; background: var(--glass-fill); border: 1px solid var(--glass-stroke); box-shadow: var(--shadow-soft); }
+  .r-label { font-size: 11px; color: var(--text-secondary); font-family: monospace; }
+</style>
+</head>
+<body>
+<div class="page">
+  <h1>Aria Dawn — Design Tokens <span class="badge">Light Theme</span></h1>
+  <p class="subtitle">Light variant of the Nebula system. Warm canvas, frosted glass surfaces, aurora accents at full saturation.</p>
+
+  <h2>Aurora Background Mesh (Light)</h2>
+  <div class="aurora-swatch">soft aurora on warm canvas — subtle, sophisticated</div>
+
+  <h2>Base Canvas</h2>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="swatch-color" style="background:#F7F5F2;"></div><div class="swatch-info"><div class="swatch-name">Base</div><div class="swatch-hex">#F7F5F2</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#EFECE8;"></div><div class="swatch-info"><div class="swatch-name">Base+1</div><div class="swatch-hex">#EFECE8</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#E8E4DE;"></div><div class="swatch-info"><div class="swatch-name">Base+2</div><div class="swatch-hex">#E8E4DE</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:rgba(255,255,255,0.72);border:1px solid rgba(0,0,0,0.07);"></div><div class="swatch-info"><div class="swatch-name">Glass Fill</div><div class="swatch-hex">rgba(255,255,255,.72)</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:rgba(0,0,0,0.07);"></div><div class="swatch-info"><div class="swatch-name">Glass Stroke</div><div class="swatch-hex">rgba(0,0,0,.07)</div></div></div>
+  </div>
+
+  <h2>Aurora Accents (Light)</h2>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#5B3FE8,#7B5CF0);"></div><div class="swatch-info"><div class="swatch-name">Aurora Violet</div><div class="swatch-hex">#5B3FE8</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#A02FCC,#5B3FE8);"></div><div class="swatch-info"><div class="swatch-name">Aurora Magenta</div><div class="swatch-hex">#A02FCC</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#0BABA0,#7B5CF0);"></div><div class="swatch-info"><div class="swatch-name">Aurora Teal</div><div class="swatch-hex">#0BABA0</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#7B5CF0,#5B3FE8);"></div><div class="swatch-info"><div class="swatch-name">Aurora Lavender</div><div class="swatch-hex">#7B5CF0</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:linear-gradient(135deg,#D97706,#F59E0B);"></div><div class="swatch-info"><div class="swatch-name">Aurora Amber</div><div class="swatch-hex">#D97706</div></div></div>
+  </div>
+
+  <h2>State Colors</h2>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="swatch-color" style="background:#5B3FE8;"></div><div class="swatch-info"><div class="swatch-name">Idle</div><div class="swatch-hex">#5B3FE8</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#0BABA0;"></div><div class="swatch-info"><div class="swatch-name">Listening</div><div class="swatch-hex">#0BABA0</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#7B5CF0;"></div><div class="swatch-info"><div class="swatch-name">Processing</div><div class="swatch-hex">#7B5CF0</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#D97706;"></div><div class="swatch-info"><div class="swatch-name">Speaking</div><div class="swatch-hex">#D97706</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#9B99B0;"></div><div class="swatch-info"><div class="swatch-name">Muted</div><div class="swatch-hex">#9B99B0</div></div></div>
+  </div>
+
+  <h2>Text</h2>
+  <div class="swatch-grid">
+    <div class="swatch"><div class="swatch-color" style="background:#1C1A2E;"></div><div class="swatch-info"><div class="swatch-name">Primary</div><div class="swatch-hex">#1C1A2E</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#6B6880;"></div><div class="swatch-info"><div class="swatch-name">Secondary</div><div class="swatch-hex">#6B6880</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background:#A8A5C0;"></div><div class="swatch-info"><div class="swatch-name">Tertiary</div><div class="swatch-hex">#A8A5C0</div></div></div>
+  </div>
+
+  <h2>Type Scale</h2>
+  <div class="type-scale">
+    <div class="type-row"><div class="type-meta"><strong>Display</strong>Sora 600 · 48/52</div><div class="t-display">Aria</div></div>
+    <div class="type-row"><div class="type-meta"><strong>Headline L</strong>Sora 600 · 32/40</div><div class="t-headline-l">Hey Aria</div></div>
+    <div class="type-row"><div class="type-meta"><strong>Headline M</strong>Sora 600 · 24/30</div><div class="t-headline-m">Meet Aria</div></div>
+    <div class="type-row"><div class="type-meta"><strong>Title</strong>Sora 500 · 18/24</div><div class="t-title">Voice Settings</div></div>
+    <div class="type-row"><div class="type-meta"><strong>Body L</strong>DM Sans 400 · 16/24</div><div class="t-body-l">AI that lives entirely on your phone. Private by design.</div></div>
+    <div class="type-row"><div class="type-meta"><strong>Body M</strong>DM Sans 400 · 14/20</div><div class="t-body-m">Say "Hey Aria" to try it out. Tap the mic or type below.</div></div>
+    <div class="type-row"><div class="type-meta"><strong>Label</strong>DM Sans 500 · 13/18 · UC</div><div class="t-label">Premium · Settings</div></div>
+    <div class="type-row"><div class="type-meta"><strong>Caption</strong>DM Sans 400 · 11/16</div><div class="t-caption">GPU accelerated · Private · On-device</div></div>
+  </div>
+
+  <h2>Spacing Scale</h2>
+  <div class="spacing-grid">
+    <div class="sp-item"><div class="sp-bar" style="height:4px;"></div><div class="sp-label">4</div></div>
+    <div class="sp-item"><div class="sp-bar" style="height:8px;"></div><div class="sp-label">8</div></div>
+    <div class="sp-item"><div class="sp-bar" style="height:12px;"></div><div class="sp-label">12</div></div>
+    <div class="sp-item"><div class="sp-bar" style="height:16px;"></div><div class="sp-label">16</div></div>
+    <div class="sp-item"><div class="sp-bar" style="height:24px;"></div><div class="sp-label">24</div></div>
+    <div class="sp-item"><div class="sp-bar" style="height:32px;"></div><div class="sp-label">32</div></div>
+    <div class="sp-item"><div class="sp-bar" style="height:48px;"></div><div class="sp-label">48</div></div>
+    <div class="sp-item"><div class="sp-bar" style="height:64px;"></div><div class="sp-label">64</div></div>
+  </div>
+
+  <h2>Border Radii</h2>
+  <div class="radius-grid">
+    <div class="r-item"><div class="r-box" style="border-radius:8px;"></div><div class="r-label">sm · 8</div></div>
+    <div class="r-item"><div class="r-box" style="border-radius:16px;"></div><div class="r-label">md · 16</div></div>
+    <div class="r-item"><div class="r-box" style="border-radius:24px;"></div><div class="r-label">lg · 24</div></div>
+    <div class="r-item"><div class="r-box" style="border-radius:36px;"></div><div class="r-label">xl · 36</div></div>
+    <div class="r-item"><div class="r-box" style="border-radius:999px;width:80px;height:40px;"></div><div class="r-label">full</div></div>
+  </div>
+</div>
+</body>
+</html>

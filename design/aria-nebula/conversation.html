@@ -1,0 +1,165 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aria Nebula — Conversation</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap');</style>
+<style>
+  :root{
+    --base:#06060B;--glass-fill:rgba(255,255,255,0.05);--glass-stroke:rgba(255,255,255,0.09);
+    --text-primary:#F0EFFE;--text-secondary:#9896B8;
+    --aurora-violet:#7C5CFF;--aurora-teal:#22D3C5;--aurora-magenta:#C04AE0;--aurora-amber:#F59E0B;
+    --user-bubble:rgba(124,92,255,0.18);--user-stroke:rgba(124,92,255,0.35);
+    --aria-bubble:rgba(255,255,255,0.045);--aria-stroke:rgba(255,255,255,0.09);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--base);color:var(--text-primary);font-family:'DM Sans',sans-serif;padding:48px 40px;}
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 20%,rgba(124,92,255,.18) 0%,transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 15%,rgba(192,74,224,.14) 0%,transparent 55%),
+      radial-gradient(ellipse 70% 60% at 70% 85%,rgba(34,211,197,.12) 0%,transparent 60%);
+    pointer-events:none;
+  }
+  .page{position:relative;z-index:1;max-width:420px;}
+  h2{font-family:'Sora',sans-serif;font-size:13px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.12em;margin:0 0 20px;}
+  .section{margin-bottom:48px;}
+
+  /* ── CONVERSATION BUBBLES ── */
+  .convo{display:flex;flex-direction:column;gap:12px;}
+  .msg{display:flex;max-width:85%;}
+  .msg.user{align-self:flex-end;}
+  .msg.aria{align-self:flex-start;}
+
+  .bubble{
+    padding:12px 16px;border-radius:20px;
+    font-size:14px;line-height:1.55;
+    position:relative;
+  }
+  .msg.user .bubble{
+    background:var(--user-bubble);
+    border:1px solid var(--user-stroke);
+    border-bottom-right-radius:4px;
+    color:var(--text-primary);
+  }
+  .msg.aria .bubble{
+    background:var(--aria-bubble);
+    border:1px solid var(--aria-stroke);
+    backdrop-filter:blur(12px);
+    border-bottom-left-radius:4px;
+    color:var(--text-primary);
+  }
+  /* Aria has a subtle left violet glow-bar */
+  .msg.aria .bubble::before{
+    content:'';position:absolute;left:-1px;top:12px;bottom:12px;width:2px;
+    background:linear-gradient(180deg,var(--aurora-violet),var(--aurora-teal));
+    border-radius:1px;
+  }
+
+  .bubble-time{font-size:11px;color:var(--text-secondary);margin-top:4px;padding:0 4px;}
+  .msg.user .bubble-time{text-align:right;}
+
+  /* ── STREAMING STATE ── */
+  .streaming-text{
+    font-size:14px;line-height:1.55;color:var(--text-primary);
+    padding:12px 0;
+  }
+  .cursor{
+    display:inline-block;width:2px;height:14px;background:var(--aurora-teal);
+    margin-left:2px;border-radius:1px;vertical-align:middle;
+    animation:blink .7s step-end infinite;
+  }
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+  /* ── SEARCH RESULT CARD ── */
+  .search-card{
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;padding:14px;margin-top:8px;
+    cursor:pointer;transition:background .2s,border-color .2s;
+  }
+  .search-card:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14);}
+  .search-title{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:5px;line-height:1.4;}
+  .search-snippet{font-size:12px;color:var(--text-secondary);line-height:1.5;margin-bottom:8px;}
+  .search-domain{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--aurora-violet);}
+  .search-domain svg{width:10px;height:10px;fill:currentColor;opacity:.7;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="section">
+    <h2>Conversation Bubbles</h2>
+    <div class="convo">
+      <div class="msg user">
+        <div>
+          <div class="bubble">What's the weather like today?</div>
+          <div class="bubble-time">2:14 PM</div>
+        </div>
+      </div>
+      <div class="msg aria">
+        <div>
+          <div class="bubble">It's currently 72°F and partly cloudy in your area. Expect a high of 78°F with a light breeze from the northwest.</div>
+          <div class="bubble-time">2:14 PM</div>
+        </div>
+      </div>
+      <div class="msg user">
+        <div>
+          <div class="bubble">Search for recent news about fusion energy</div>
+          <div class="bubble-time">2:15 PM</div>
+        </div>
+      </div>
+      <div class="msg aria">
+        <div>
+          <div class="bubble">Here's what I found on fusion energy:</div>
+          <!-- Search result cards -->
+          <div class="search-card">
+            <div class="search-title">Scientists achieve fusion energy milestone with record output</div>
+            <div class="search-snippet">Researchers at the National Ignition Facility announced a breakthrough in sustained fusion reactions, producing more energy than input for the second consecutive time…</div>
+            <div class="search-domain">
+              <svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+              science.org
+            </div>
+          </div>
+          <div class="search-card">
+            <div class="search-title">ITER project reaches 50% completion ahead of schedule</div>
+            <div class="search-snippet">The International Thermonuclear Experimental Reactor in France has cleared a major construction milestone, with assembly of the central solenoid now complete…</div>
+            <div class="search-domain">
+              <svg viewBox="0 0 24 24"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+              iter.org
+            </div>
+          </div>
+          <div class="bubble-time">2:15 PM</div>
+        </div>
+      </div>
+      <div class="msg user">
+        <div>
+          <div class="bubble">Set a timer for 10 minutes</div>
+          <div class="bubble-time">2:16 PM</div>
+        </div>
+      </div>
+      <div class="msg aria">
+        <div>
+          <div class="bubble">Done — 10-minute timer set. I'll alert you at 2:26 PM.</div>
+          <div class="bubble-time">2:16 PM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Streaming State</h2>
+    <div class="msg aria" style="max-width:100%">
+      <div>
+        <div class="bubble">
+          <div class="streaming-text">Fusion energy works by combining light atomic nuclei — typically hydrogen isotopes — to release enormous amounts of energy, the same process that powers the sun<span class="cursor"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

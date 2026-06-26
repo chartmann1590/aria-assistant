@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="nebula_base">#06060B</color>
+    <color name="orb_active">#7C5CFF</color>
+    <color name="orb_idle">#7C5CFF</color>
+    <color name="orb_listening">#22D3C5</color>
+    <color name="orb_processing">#A78BFA</color>
+    <color name="orb_error">#FF5252</color>
+    <color name="bubble_user">#F0EFFE</color>
+    <color name="bubble_aria">#7C5CFF</color>
+    <color name="premium_gold">#F59E0B</color>
+</resources>

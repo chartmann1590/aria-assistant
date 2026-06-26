@@ -1,0 +1,161 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aria Nebula — Glass Card</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap');</style>
+<style>
+  :root {
+    --base:#06060B; --glass-fill:rgba(255,255,255,0.045); --glass-fill-hover:rgba(255,255,255,0.07);
+    --glass-stroke:rgba(255,255,255,0.09); --glass-stroke-bright:rgba(255,255,255,0.16);
+    --text-primary:#F0EFFE; --text-secondary:#9896B8; --text-tertiary:#5E5C80;
+    --aurora-violet:#7C5CFF; --aurora-teal:#22D3C5; --aurora-magenta:#C04AE0;
+    --radius-md:16px; --radius-lg:24px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--base);color:var(--text-primary);font-family:'DM Sans',sans-serif;padding:48px 40px;}
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 80% 60% at 15% 20%,rgba(124,92,255,.18) 0%,transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 15%,rgba(192,74,224,.14) 0%,transparent 55%),
+      radial-gradient(ellipse 70% 60% at 70% 85%,rgba(34,211,197,.12) 0%,transparent 60%);
+    pointer-events:none;
+  }
+  .page{position:relative;z-index:1;}
+  h2{font-family:'Sora',sans-serif;font-size:13px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.12em;margin:0 0 24px;}
+  .section{margin-bottom:48px;}
+  .row{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;}
+
+  /* ── BASE GLASS CARD ── */
+  .glass-card {
+    background: var(--glass-fill);
+    border: 1px solid var(--glass-stroke);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: background .2s, border-color .2s;
+  }
+  .glass-card:hover {
+    background: var(--glass-fill-hover);
+    border-color: var(--glass-stroke-bright);
+  }
+
+  /* ── GLASS CARD — generic surface ── */
+  .card-surface { width: 280px; padding: 24px; }
+  .card-surface .card-title { font-family:'Sora',sans-serif; font-size:16px; font-weight:600; margin-bottom:8px; }
+  .card-surface .card-body  { font-size:14px; color:var(--text-secondary); line-height:1.5; }
+
+  /* ── GLASS CARD — accent variant ── */
+  .card-accent-violet { border-color: rgba(124,92,255,.35); background: rgba(124,92,255,.08); }
+  .card-accent-teal   { border-color: rgba(34,211,197,.35); background: rgba(34,211,197,.08); }
+  .card-accent-magenta{ border-color: rgba(192,74,224,.35); background: rgba(192,74,224,.08); }
+
+  /* ── SECTION CARD with hairline top accent ── */
+  .card-section {
+    width: 320px; padding: 0;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .card-section-bar { height: 3px; background: linear-gradient(90deg, var(--aurora-violet), var(--aurora-teal)); }
+  .card-section-inner { padding: 20px; }
+  .card-section-header { font-family:'Sora',sans-serif; font-size:13px; font-weight:500; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.1em; margin-bottom:16px; }
+  .card-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,.05); }
+  .card-row:last-child { border-bottom:none; }
+  .card-row-label { font-size:14px; }
+  .card-row-value { font-size:13px; color:var(--text-secondary); }
+
+  /* ── TOGGLE ── */
+  .toggle { width:44px; height:26px; background:rgba(255,255,255,.1); border:1px solid var(--glass-stroke); border-radius:13px; position:relative; cursor:pointer; transition:background .2s; }
+  .toggle.on { background:linear-gradient(90deg,var(--aurora-violet),var(--aurora-teal)); border-color:transparent; }
+  .toggle::after { content:''; position:absolute; width:20px; height:20px; background:#fff; border-radius:50%; top:2px; left:2px; transition:left .2s; box-shadow:0 1px 4px rgba(0,0,0,.4); }
+  .toggle.on::after { left:20px; }
+
+  /* ── PRICING CARD ── */
+  .pricing-card { width: 240px; padding: 28px 24px; text-align:center; }
+  .pricing-badge { display:inline-block; padding:4px 12px; border-radius:999px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; margin-bottom:16px; }
+  .pricing-title { font-family:'Sora',sans-serif; font-size:16px; font-weight:600; margin-bottom:12px; }
+  .pricing-amount { display:flex; align-items:flex-end; justify-content:center; gap:2px; margin-bottom:20px; }
+  .pricing-price { font-family:'Sora',sans-serif; font-size:44px; font-weight:700; line-height:1; }
+  .pricing-period { font-size:14px; color:var(--text-secondary); padding-bottom:6px; }
+  .btn-primary {
+    width:100%; padding:12px; border-radius:999px; border:none; cursor:pointer;
+    background:linear-gradient(135deg,var(--aurora-violet),var(--aurora-magenta));
+    color:#fff; font-family:'Sora',sans-serif; font-size:14px; font-weight:600;
+    letter-spacing:.03em; transition:opacity .2s;
+  }
+  .btn-primary:hover { opacity:.9; }
+
+  /* ── FEATURED outline ── */
+  .card-featured {
+    border-color: transparent;
+    background: linear-gradient(var(--base), var(--base)) padding-box,
+                linear-gradient(135deg, var(--aurora-violet), var(--aurora-teal)) border-box;
+    border: 1.5px solid transparent;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="section">
+    <h2>Glass Card — Base Surface</h2>
+    <div class="row">
+      <div class="glass-card card-surface">
+        <div class="card-title">General Q&A</div>
+        <div class="card-body">AI that lives entirely on your phone. Private by design — nothing leaves the device.</div>
+      </div>
+      <div class="glass-card card-surface card-accent-violet">
+        <div class="card-title" style="color:var(--aurora-violet)">Idle</div>
+        <div class="card-body">Wake word ready. Say "Hey Aria" to start, or tap the mic below.</div>
+      </div>
+      <div class="glass-card card-surface card-accent-teal">
+        <div class="card-title" style="color:var(--aurora-teal)">Listening</div>
+        <div class="card-body">Recording your voice — transcribing locally with Whisper.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Section Card — Settings row</h2>
+    <div class="row">
+      <div class="glass-card card-section">
+        <div class="card-section-bar"></div>
+        <div class="card-section-inner">
+          <div class="card-section-header">Voice</div>
+          <div class="card-row"><span class="card-row-label">Wake Word</span><div class="toggle on"></div></div>
+          <div class="card-row"><span class="card-row-label">TTS Speed</span><span class="card-row-value">1.0×</span></div>
+          <div class="card-row"><span class="card-row-label">Pitch</span><span class="card-row-value">1.0×</span></div>
+          <div class="card-row"><span class="card-row-label">Temperature</span><span class="card-row-value">°F</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Pricing Cards</h2>
+    <div class="row">
+      <div class="glass-card pricing-card">
+        <div class="pricing-title">Monthly</div>
+        <div class="pricing-amount">
+          <div class="pricing-price">$2</div>
+          <div class="pricing-period">.99/mo</div>
+        </div>
+        <button class="btn-primary">Get Monthly</button>
+      </div>
+      <div class="glass-card pricing-card card-featured">
+        <div class="pricing-badge" style="background:linear-gradient(135deg,var(--aurora-violet),var(--aurora-magenta));color:#fff;">Save 44%</div>
+        <div class="pricing-title">Yearly</div>
+        <div class="pricing-amount">
+          <div class="pricing-price">$19</div>
+          <div class="pricing-period">.99/yr</div>
+        </div>
+        <button class="btn-primary">Get Yearly</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

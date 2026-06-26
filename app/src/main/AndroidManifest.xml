@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ── Core voice assistant permissions ─────────────────────────────── -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- ── Alarms, timers, alerts ────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- ── Phone & messaging (premium features) ──────────────────────────── -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!-- ── Network (model download, web search) ──────────────────────────── -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <!-- ── Boot & device state ───────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!--
+        REQUEST_IGNORE_BATTERY_OPTIMIZATIONS: required to present the system dialog
+        that exempts Aria from battery optimisation so the wake-word listener stays
+        active. Voice-assistant apps are an explicitly permitted use case under
+        Google Play policy (section "Acceptable Use of Background Location and
+        Battery Exemptions").
+    -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!--
+        SYSTEM_ALERT_WINDOW: used to display the Aria response overlay while the
+        user is in another app. Voice-assistant and heads-up notification apps are
+        a permitted use case. Declared in Play Console under "Special App Access".
+    -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!--
+        WRITE_SETTINGS: allows Aria to adjust system settings on command
+        (e.g. "turn on Wi-Fi", "set brightness to 50%"). Granted via
+        Settings.ACTION_MANAGE_WRITE_SETTINGS — not automatically granted.
+    -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
+    <!-- ── Extended phone capabilities (premium, runtime-gated) ─────────── -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".AriaApplication"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Aria"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Aria">
+
+        <activity
+            android:name=".presentation.MainActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustNothing"
+            android:theme="@style/Theme.Aria">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".service.AriaForegroundService"
+            android:foregroundServiceType="microphone"
+            android:exported="false" />
+
+        <!--
+            NotificationListenerService: Aria reads incoming notifications so the
+            user can ask "what did I just get?" hands-free. Declared in Play Console
+            Data Safety form under "App info and performance > Notifications".
+        -->
+        <service
+            android:name=".permission.AriaNotificationListener"
+            android:label="Aria Notifications"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.notification.Listener"
+                android:resource="@xml/notification_listener_config" />
+        </service>
+
+        <!--
+            AccessibilityService: used for screen-reading and UI interaction on
+            command ("tap the Send button"). Declared in Play Console Data Safety
+            form under "Accessibility". Service is not active unless user explicitly
+            enables it in Android Settings.
+        -->
+        <service
+            android:name=".permission.AriaAccessibilityService"
+            android:label="Aria Accessibility"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <receiver
+            android:name=".skill.TestReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.aria.assistant.TEST_SEARCH" />
+            </intent-filter>
+        </receiver>
+
+        <!--
+            BOOT_COMPLETED must be received from the system process (package=android),
+            so the receiver must be exported. It is protected against third-party
+            senders because BOOT_COMPLETED is a protected-broadcast action.
+        -->
+        <receiver
+            android:name=".service.AriaBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <uses-native-library android:name="libOpenCL.so" android:required="false" />
+        <uses-native-library android:name="libOpenCL-pixel.so" android:required="false" />
+
+    </application>
+
+</manifest>

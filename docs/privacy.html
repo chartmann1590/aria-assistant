@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Privacy Policy — Aria</title>
+<meta name="description" content="Aria Privacy Policy — fully on-device, zero data collection." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --base:#06060B;--base1:#0E0E18;--base2:#16162A;
+  --violet:#7C5CFF;--teal:#22D3C5;--magenta:#C04AE0;--amber:#F59E0B;
+  --txt:#F0EFFE;--txt2:#9896B8;--txt3:#5E5C80;
+  --glass:rgba(255,255,255,.045);--stroke:rgba(255,255,255,.09);
+}
+html{scroll-behavior:smooth}
+body{background:var(--base);color:var(--txt);font-family:'DM Sans',system-ui,sans-serif;line-height:1.7}
+.aurora{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 15% 20%,rgba(124,92,255,.12) 0%,transparent 65%),
+             radial-gradient(ellipse 70% 50% at 85% 10%,rgba(192,74,224,.08) 0%,transparent 60%);
+  animation:drift 25s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translate(0,0)}to{transform:translate(-1%,1%)}}
+nav{position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  background:rgba(6,6,11,.8);border-bottom:1px solid var(--stroke);padding:16px 0}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;max-width:900px;margin:0 auto;padding:0 24px}
+.nav-logo{font-family:'Sora',sans-serif;font-weight:600;font-size:1.2rem;
+  background:linear-gradient(90deg,var(--violet),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none}
+.nav-back{color:var(--txt2);text-decoration:none;font-size:.88rem;transition:color .2s}
+.nav-back:hover{color:var(--txt)}
+.doc-wrap{max-width:780px;margin:0 auto;padding:72px 24px 100px;position:relative;z-index:1}
+.doc-badge{display:inline-block;background:rgba(124,92,255,.12);border:1px solid rgba(124,92,255,.25);
+  border-radius:999px;padding:5px 16px;font-size:.75rem;color:var(--violet);letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px}
+h1{font-family:'Sora',sans-serif;font-size:clamp(2rem,5vw,3rem);font-weight:700;line-height:1.1;margin-bottom:12px}
+.meta{color:var(--txt3);font-size:.88rem;margin-bottom:48px}
+.summary-box{background:rgba(34,211,197,.07);border:1px solid rgba(34,211,197,.2);border-radius:16px;padding:24px 28px;margin-bottom:48px}
+.summary-box h3{font-family:'Sora',sans-serif;font-size:.95rem;color:var(--teal);margin-bottom:12px}
+.summary-box ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+.summary-box li{font-size:.9rem;display:flex;gap:10px;color:var(--txt2)}
+.summary-box li::before{content:'✓';color:var(--teal);font-weight:700;flex-shrink:0}
+h2{font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:600;margin:44px 0 14px;
+  padding-bottom:10px;border-bottom:1px solid var(--stroke);color:var(--txt)}
+h3{font-family:'Sora',sans-serif;font-size:1rem;font-weight:600;margin:24px 0 8px;color:var(--txt)}
+p{color:var(--txt2);margin-bottom:14px;font-size:.95rem}
+ul,ol{color:var(--txt2);margin:0 0 14px 0;padding-left:20px}
+li{margin-bottom:6px;font-size:.95rem}
+table{width:100%;border-collapse:collapse;margin:20px 0}
+th{font-family:'Sora',sans-serif;font-size:.78rem;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;
+  text-align:left;padding:10px 14px;border-bottom:1px solid var(--stroke)}
+td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.88rem;color:var(--txt2);vertical-align:top}
+tr:hover td{background:rgba(255,255,255,.02)}
+.yes{color:var(--teal)}
+.no{color:var(--txt3)}
+a{color:var(--violet)}
+.contact-box{background:var(--glass);border:1px solid var(--stroke);border-radius:16px;padding:28px;margin-top:48px}
+.contact-box p{margin:0}
+footer{border-top:1px solid var(--stroke);padding:28px 0;position:relative;z-index:1}
+.footer-inner{max-width:780px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.footer-inner p,.footer-inner a{font-size:.8rem;color:var(--txt3);text-decoration:none}
+.footer-inner a:hover{color:var(--txt)}
+</style>
+</head>
+<body>
+<div class="aurora"></div>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">Aria</a>
+    <a class="nav-back" href="/">← Back to home</a>
+  </div>
+</nav>
+
+<div class="doc-wrap">
+  <div class="doc-badge">Legal</div>
+  <h1>Privacy Policy</h1>
+  <p class="meta">Effective date: June 25, 2025 &nbsp;·&nbsp; Last updated: June 25, 2025</p>
+
+  <div class="summary-box">
+    <h3>The short version</h3>
+    <ul>
+      <li>All AI inference happens on your device — no audio, text, or conversations ever leave your phone.</li>
+      <li>We collect zero personal data. There are no servers storing your information.</li>
+      <li>The only external communication is optional web search, model downloads, and Play Billing (handled by Google).</li>
+      <li>No advertising, no analytics SDKs, no third-party tracking of any kind.</li>
+    </ul>
+  </div>
+
+  <h2>1. Who we are</h2>
+  <p>Aria is developed and maintained by Charles Hartmann ("we", "us", "our"). You can reach us at <a href="mailto:charles.h.hartmann1@gmail.com">charles.h.hartmann1@gmail.com</a>.</p>
+
+  <h2>2. What data Aria collects</h2>
+  <p>Aria is designed from the ground up to be private. The table below summarises every data type and what happens to it.</p>
+
+  <table>
+    <thead>
+      <tr><th>Data type</th><th>Processed on-device?</th><th>Sent anywhere?</th><th>Stored?</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Your voice / audio</td><td class="yes">Yes — on device only</td><td class="no">Never</td><td class="no">No (discarded after transcription)</td></tr>
+      <tr><td>Conversation text</td><td class="yes">Yes — on device only</td><td class="no">Never</td><td class="yes">Locally in app database only</td></tr>
+      <tr><td>Location</td><td class="yes">Yes — on device only</td><td class="no">Never</td><td class="no">No (used in-context, not stored)</td></tr>
+      <tr><td>Contacts / calendar</td><td class="yes">Yes — on device only</td><td class="no">Never</td><td class="no">No (read in-context only)</td></tr>
+      <tr><td>SMS / notifications</td><td class="yes">Yes — on device only</td><td class="no">Never</td><td class="no">No (read aloud then discarded)</td></tr>
+      <tr><td>Camera images</td><td class="yes">Yes — on device only</td><td class="no">Never</td><td class="no">No (used only when you ask)</td></tr>
+      <tr><td>Purchase / billing</td><td>Handled by Google Play</td><td>Google Play only</td><td>Google Play only</td></tr>
+      <tr><td>Crash diagnostics</td><td class="yes">Not collected</td><td class="no">Never</td><td class="no">No</td></tr>
+    </tbody>
+  </table>
+
+  <p>Aria does <strong>not</strong> contain any analytics SDK, advertising SDK, or crash-reporting SDK.</p>
+
+  <h2>3. Permissions and why they are needed</h2>
+
+  <h3>RECORD_AUDIO</h3>
+  <p>Required for the wake word listener (OpenWakeWord) and voice transcription (Whisper STT). Audio is processed in real-time on device and immediately discarded. It is never written to disk or transmitted.</p>
+
+  <h3>FOREGROUND_SERVICE / FOREGROUND_SERVICE_MICROPHONE</h3>
+  <p>Android requires these permissions to keep Aria listening in the background while showing a persistent notification. The notification is mandatory and cannot be suppressed.</p>
+
+  <h3>POST_NOTIFICATIONS</h3>
+  <p>Required on Android 13+ to display the foreground service notification that keeps Aria running. Aria uses this permission only for its own status notification.</p>
+
+  <h3>CALL_PHONE / SEND_SMS / READ_SMS / RECEIVE_SMS</h3>
+  <p>Premium features that let you make calls and send/read messages by voice. These are runtime permissions — Aria requests them only when you first use the relevant feature. Aria never initiates calls or sends messages without an explicit voice command from you.</p>
+
+  <h3>READ_CONTACTS / WRITE_CONTACTS</h3>
+  <p>Used to look up contact names when you say "call John" or "text Sarah". Contacts are read in-context and never exported or transmitted.</p>
+
+  <h3>ACCESS_FINE_LOCATION / ACCESS_COARSE_LOCATION</h3>
+  <p>Used when you ask location-based questions ("What's the weather?", "Navigate to the nearest coffee shop"). Location is never stored or sent to any server. Used only for the duration of the query.</p>
+
+  <h3>CAMERA</h3>
+  <p>A premium feature that lets you ask Aria to take a photo or describe what the camera sees. Camera is only activated in response to an explicit voice command.</p>
+
+  <h3>READ_CALENDAR / WRITE_CALENDAR</h3>
+  <p>Lets Aria create events and read your schedule when you ask. Calendar data is never transmitted.</p>
+
+  <h3>SYSTEM_ALERT_WINDOW</h3>
+  <p>Used to display an optional overlay showing Aria's response while you are using another app. You must explicitly grant this in Android Settings — it is not requested automatically at install.</p>
+
+  <h3>WRITE_SETTINGS</h3>
+  <p>Allows commands like "set brightness to 50%" or "turn on Wi-Fi". This requires a manual grant in Android Settings.</p>
+
+  <h3>BIND_NOTIFICATION_LISTENER_SERVICE</h3>
+  <p>Lets Aria read incoming notifications when you ask "What did I just get?" This is disabled by default and requires manual activation in Android Settings → Special App Access → Notification Access.</p>
+
+  <h3>BIND_ACCESSIBILITY_SERVICE</h3>
+  <p>An optional service that enables screen-reading and tapping UI elements on command. Disabled by default and requires manual activation in Android Settings → Accessibility. Aria never activates this service on its own.</p>
+
+  <h3>REQUEST_IGNORE_BATTERY_OPTIMIZATIONS</h3>
+  <p>Voice assistants must stay awake to hear the wake word. Android prompts you to exempt Aria from battery optimisation. This is optional — without it the wake word may stop working when the screen is off.</p>
+
+  <h3>RECEIVE_BOOT_COMPLETED</h3>
+  <p>Allows Aria to restart its listener automatically after a device reboot, so you do not have to open the app manually. No data is accessed at boot.</p>
+
+  <h3>INTERNET / ACCESS_WIFI_STATE</h3>
+  <p>Used for: (a) downloading the AI model on first launch, (b) web search queries when you explicitly ask, (c) verifying Play Billing subscription status. No other network requests are made.</p>
+
+  <h2>4. Web search</h2>
+  <p>When you ask a question that requires current information, Aria performs a web search. Your query text is sent to the search provider (DuckDuckGo or Wikipedia) to retrieve results. No other information (device ID, location, history) is included. Search is opt-in — Aria uses on-device knowledge first and only searches the web when necessary or explicitly requested.</p>
+
+  <h2>5. Billing and subscriptions</h2>
+  <p>Premium subscriptions are processed exclusively through Google Play Billing. Aria never receives, stores, or processes payment card information. The only data we receive from Google Play is an anonymised purchase token confirming that a valid subscription exists. This token is verified against Google Play's servers to enable premium features. No other personally identifiable information is shared with us by Google.</p>
+
+  <h2>6. Children's privacy</h2>
+  <p>Aria is not directed at children under 13. We do not knowingly collect any information from children. If you believe a child has provided information through Aria, please contact us at <a href="mailto:charles.h.hartmann1@gmail.com">charles.h.hartmann1@gmail.com</a> and we will address it promptly.</p>
+
+  <h2>7. Data security</h2>
+  <p>Because Aria stores all data locally on your device, the security of your data is determined by your device's own security (screen lock, encryption). Conversation history is stored in an Android Room database that is not accessible to other apps. We strongly recommend keeping your device encrypted and updated.</p>
+
+  <h2>8. Data retention and deletion</h2>
+  <p>Conversation history is stored locally on your device indefinitely until you clear it. You can delete all conversation history at any time from within the app. Uninstalling Aria removes all locally stored data. We do not hold any of your data on external servers.</p>
+
+  <h2>9. Your rights</h2>
+  <p>Because Aria collects no personal data on our servers, there is nothing for us to access, export, or delete on your behalf. All data is stored locally on your device and is fully under your control. You can clear conversation history inside the app, or uninstall the app to remove all data.</p>
+
+  <h2>10. Changes to this policy</h2>
+  <p>If we make material changes to this Privacy Policy, we will update the "Last updated" date at the top of this page and note the change in the app's release notes. Continued use of Aria after changes take effect constitutes acceptance of the revised policy.</p>
+
+  <h2>11. Contact</h2>
+  <div class="contact-box">
+    <p>Questions or concerns about this Privacy Policy? Contact us at:<br/>
+    <a href="mailto:charles.h.hartmann1@gmail.com">charles.h.hartmann1@gmail.com</a><br/><br/>
+    We aim to respond within 5 business days.</p>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <p>&copy; 2025 Aria — Apache 2.0 License</p>
+    <p><a href="/">Home</a> · <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Service</a></p>
+  </div>
+</footer>
+</body>
+</html>

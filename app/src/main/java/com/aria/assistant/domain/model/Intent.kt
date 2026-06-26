@@ -1,0 +1,34 @@
+package com.aria.assistant.domain.model
+
+sealed class AriaIntent {
+    data class SetTimer(val durationSeconds: Int) : AriaIntent()
+    data class SetAlarm(val hour: Int, val minute: Int, val label: String = "") : AriaIntent()
+    data class MakeCall(val contact: String) : AriaIntent()
+    data class SendSms(val contact: String, val message: String) : AriaIntent()
+    data class AdjustSetting(val setting: String, val value: String) : AriaIntent()
+    data class GeneralResponse(val text: String, val spokenText: String) : AriaIntent()
+    data object Unrecognized : AriaIntent()
+
+    data object OpenSettings : AriaIntent()
+    data object OpenPremium : AriaIntent()
+    data object OpenHistory : AriaIntent()
+    data class WebSearch(val query: String) : AriaIntent()
+
+    data class CreateCalendarEvent(val title: String, val startMs: Long, val endMs: Long? = null, val location: String? = null) : AriaIntent()
+    data class ListCalendarEvents(val fromMs: Long?, val toMs: Long?) : AriaIntent()
+    data class SetReminder(val eventId: String?, val minutesBefore: Int, val label: String?) : AriaIntent()
+    data class ReadNotifications(val filter: String?) : AriaIntent()
+    data class ReplyNotification(val notificationKey: String, val replyText: String) : AriaIntent()
+    data class GetLocation(val query: String?) : AriaIntent()
+    data class NavigateTo(val place: String) : AriaIntent()
+    data class TakePhoto(val label: String?) : AriaIntent()
+    data class GetLatestPhoto(val count: Int?) : AriaIntent()
+    data class MediaControl(val action: String) : AriaIntent()
+    data class LaunchApp(val appName: String) : AriaIntent()
+    data class ListApps(val filter: String?) : AriaIntent()
+    data class ReadScreen(val detail: String?) : AriaIntent()
+    data class ClickOn(val label: String) : AriaIntent()
+    data class Scroll(val direction: String, val container: String?) : AriaIntent()
+    data class GetBattery(val detail: String?) : AriaIntent()
+    data class GetTime(val format: String?) : AriaIntent()
+}

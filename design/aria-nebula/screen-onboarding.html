@@ -1,0 +1,172 @@
+<!-- @dsCard group="Screens" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aria Nebula — Onboarding</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap');</style>
+<style>
+  :root{
+    --base:#06060B;--glass-fill:rgba(255,255,255,0.045);--glass-stroke:rgba(255,255,255,0.08);
+    --text-primary:#F0EFFE;--text-secondary:#9896B8;--text-tertiary:#5E5C80;
+    --aurora-violet:#7C5CFF;--aurora-teal:#22D3C5;--aurora-magenta:#C04AE0;--aurora-amber:#F59E0B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--base);font-family:'DM Sans',sans-serif;display:flex;gap:32px;padding:40px;justify-content:center;flex-wrap:wrap;}
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 90% 70% at 10% 10%,rgba(124,92,255,.22) 0%,transparent 55%),
+      radial-gradient(ellipse 70% 60% at 85% 5%,rgba(192,74,224,.18) 0%,transparent 50%),
+      radial-gradient(ellipse 80% 70% at 75% 95%,rgba(34,211,197,.15) 0%,transparent 55%);
+    pointer-events:none;
+  }
+  .phone{
+    position:relative;z-index:2;
+    width:320px;height:693px;
+    border-radius:40px;overflow:hidden;
+    border:1.5px solid rgba(255,255,255,.1);
+    box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);
+    background:rgba(6,6,11,.95);
+    display:flex;flex-direction:column;
+  }
+  .phone-label{
+    font-family:'Sora',sans-serif;font-size:11px;color:var(--text-tertiary);
+    text-align:center;margin-top:8px;letter-spacing:.06em;text-transform:uppercase;
+  }
+
+  /* Progress */
+  .progress-bar{height:2px;background:rgba(255,255,255,.08);margin:20px 28px 0;border-radius:1px;}
+  .progress-fill{height:100%;border-radius:1px;background:linear-gradient(90deg,var(--aurora-violet),var(--aurora-teal));transition:width .4s;}
+
+  .step-content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 28px;text-align:center;}
+
+  /* ORB */
+  .orb{width:140px;height:140px;border-radius:50%;position:relative;flex-shrink:0;}
+  .orb::before{content:'';position:absolute;inset:-24px;border-radius:50%;filter:blur(16px);opacity:.5;}
+  .orb::after{content:'';position:absolute;width:35%;height:35%;top:14%;left:16%;border-radius:50%;background:rgba(255,255,255,.2);filter:blur(5px);}
+  .orb-idle{background:radial-gradient(circle at 35% 35%,rgba(167,139,250,.95),rgba(124,92,255,.85) 40%,rgba(76,29,149,.9) 75%,rgba(30,10,60,.95));}
+  .orb-idle::before{background:radial-gradient(circle,rgba(124,92,255,.5),transparent 65%);}
+  .orb-processing{background:radial-gradient(circle at 35% 35%,rgba(200,180,255,.95),rgba(167,139,250,.85) 40%,rgba(109,40,217,.9) 75%,rgba(40,10,80,.95));}
+  .orb-processing::before{background:radial-gradient(circle,rgba(167,139,250,.5),transparent 65%);}
+  .orb-listening{background:radial-gradient(circle at 35% 35%,rgba(110,240,230,.95),rgba(34,211,197,.85) 40%,rgba(6,105,100,.9) 75%,rgba(2,30,28,.95));}
+  .orb-listening::before{background:radial-gradient(circle,rgba(34,211,197,.5),transparent 65%);}
+
+  h1{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;margin-top:24px;line-height:1.2;}
+  .subtitle{font-size:14px;color:var(--text-secondary);margin-top:10px;line-height:1.6;}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;font-size:12px;font-weight:500;margin-top:12px;}
+  .pill-violet{background:rgba(124,92,255,.15);border:1px solid rgba(124,92,255,.3);color:var(--aurora-violet);}
+  .pill-teal{background:rgba(34,211,197,.15);border:1px solid rgba(34,211,197,.3);color:var(--aurora-teal);}
+
+  .btn-primary{
+    width:100%;padding:14px;border-radius:999px;border:none;cursor:pointer;margin-top:28px;
+    background:linear-gradient(135deg,var(--aurora-violet),var(--aurora-magenta));
+    color:#fff;font-family:'Sora',sans-serif;font-size:15px;font-weight:600;
+    box-shadow:0 0 28px rgba(124,92,255,.5);letter-spacing:.02em;
+  }
+  .btn-ghost{
+    width:100%;padding:12px;border-radius:999px;border:1px solid rgba(255,255,255,.1);
+    background:transparent;color:var(--text-secondary);
+    font-family:'Sora',sans-serif;font-size:14px;cursor:pointer;margin-top:10px;
+  }
+
+  /* Download progress */
+  .dl-bar{width:80%;margin:16px auto 0;}
+  .dl-bar-bg{height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;}
+  .dl-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--aurora-violet),var(--aurora-teal));}
+  .dl-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--text-secondary);margin-top:6px;}
+
+  /* Step dots */
+  .step-dots{display:flex;gap:8px;justify-content:center;padding:16px 0 24px;flex-shrink:0;}
+  .dot{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.15);transition:all .3s;}
+  .dot.active{width:20px;background:var(--aurora-violet);}
+  .dot.done{background:rgba(124,92,255,.5);}
+</style>
+</head>
+<body>
+
+<!-- STEP 1: Meet Aria -->
+<div style="display:flex;flex-direction:column;gap:8px;align-items:center;">
+  <div class="phone">
+    <div class="progress-bar"><div class="progress-fill" style="width:16%"></div></div>
+    <div class="step-content">
+      <div class="orb orb-idle"></div>
+      <h1 style="color:var(--text-primary)">Meet Aria</h1>
+      <div class="subtitle">AI that lives entirely on your phone.<br>Private. Fast. Always ready.</div>
+      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center;">
+        <span class="pill pill-violet">🔒 On-device</span>
+        <span class="pill pill-teal">⚡ GPU fast</span>
+        <span class="pill pill-violet">🎙 Wake word</span>
+      </div>
+      <button class="btn-primary">Get Started</button>
+    </div>
+    <div class="step-dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  </div>
+  <div class="phone-label">Step 1 — Welcome</div>
+</div>
+
+<!-- STEP 2: Downloading -->
+<div style="display:flex;flex-direction:column;gap:8px;align-items:center;">
+  <div class="phone">
+    <div class="progress-bar"><div class="progress-fill" style="width:33%"></div></div>
+    <div class="step-content">
+      <div class="orb orb-processing" style="animation:spin-hue 3s linear infinite;"></div>
+      <h1>Downloading Aria</h1>
+      <div class="subtitle" style="color:var(--aurora-violet)">Downloading Gemma 4 model…</div>
+      <div class="dl-bar">
+        <div class="dl-bar-bg"><div class="dl-bar-fill" style="width:67%"></div></div>
+        <div class="dl-meta"><span>67%</span><span>2.1 GB / 3.1 GB</span></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;font-size:12px;color:var(--text-tertiary);">
+        <span>Gemma 4: 67%</span>
+        <span>·</span>
+        <span>STT: done</span>
+      </div>
+    </div>
+    <div class="step-dots"><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  </div>
+  <div class="phone-label">Step 2 — Download</div>
+</div>
+
+<!-- STEP 3: Mic -->
+<div style="display:flex;flex-direction:column;gap:8px;align-items:center;">
+  <div class="phone">
+    <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+    <div class="step-content">
+      <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--aurora-violet),var(--aurora-magenta));display:flex;align-items:center;justify-content:center;box-shadow:0 0 32px rgba(124,92,255,.5);">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="white"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.95-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.05 7.44-7 7.93V19h3v2H9v-2h2v-3.07z"/></svg>
+      </div>
+      <h1>Microphone Access</h1>
+      <div class="subtitle">Aria needs mic access to hear your wake word and transcribe your voice. Nothing leaves your phone.</div>
+      <button class="btn-primary" style="margin-top:32px;">Allow Microphone</button>
+    </div>
+    <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+  </div>
+  <div class="phone-label">Step 3 — Permissions</div>
+</div>
+
+<!-- STEP 6: Wake word test -->
+<div style="display:flex;flex-direction:column;gap:8px;align-items:center;">
+  <div class="phone">
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="step-content">
+      <div style="position:relative;width:180px;height:180px;display:flex;align-items:center;justify-content:center;">
+        <div style="position:absolute;inset:-10px;border-radius:50%;border:1px solid rgba(34,211,197,.3);animation:ring 2s ease-out infinite;"></div>
+        <div style="position:absolute;inset:-10px;border-radius:50%;border:1px solid rgba(34,211,197,.2);animation:ring 2s ease-out infinite;animation-delay:.7s;"></div>
+        <div class="orb orb-listening" style="width:140px;height:140px;"></div>
+      </div>
+      <h1>Say "Hey Aria"</h1>
+      <div class="subtitle">Try the wake word to confirm everything's working. Aria is listening…</div>
+      <button class="btn-primary" style="margin-top:32px;">Done — Start Using Aria</button>
+    </div>
+    <div class="step-dots"><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot done"></div><div class="dot active"></div></div>
+  </div>
+  <div class="phone-label">Step 6 — Wake Word Test</div>
+</div>
+
+<style>
+@keyframes spin-hue{from{filter:hue-rotate(0deg);}to{filter:hue-rotate(30deg);}}
+@keyframes ring{0%{transform:scale(.55);opacity:.7;}100%{transform:scale(1.3);opacity:0;}}
+</style>
+</body>
+</html>

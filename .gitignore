@@ -1,0 +1,49 @@
+# Gradle
+.gradle/
+.kotlin/
+build/
+app/build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+/captures
+.externalNativeBuild/
+.cxx/
+.navigation/
+
+# Build artifacts
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+bin/
+gen/
+out/
+
+# Logs & misc dev artifacts
+*.log
+*.hprof
+*.lock
+logcat.txt
+
+# Root-level ADB UI dump XMLs (dev tooling)
+/ui.xml
+/ui2.xml
+/ui_permissions.xml
+/ui_restart.xml
+/ui_settings.xml
+
+# Root-level dev screenshots (not app assets)
+/screen.png
+/screen2.png
+/screen3.png
+/proof.png
+/proof2.png
+/premium_proof.png
+/screenshot_final.png
+/screenshot_first.png
+/screenshot_premium.png

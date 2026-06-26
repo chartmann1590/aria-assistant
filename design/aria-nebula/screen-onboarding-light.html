@@ -1,0 +1,145 @@
+<!-- @dsCard group="Screens · Light" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aria Dawn — Onboarding (Light)</title>
+<style>@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap');</style>
+<style>
+  :root{
+    --base:#F7F5F2;--glass-fill:rgba(255,255,255,0.78);--glass-stroke:rgba(0,0,0,0.07);
+    --text-primary:#1C1A2E;--text-secondary:#6B6880;--text-tertiary:#A8A5C0;
+    --aurora-violet:#5B3FE8;--aurora-teal:#0BABA0;--aurora-magenta:#A02FCC;
+    --shadow:0 4px 20px rgba(0,0,0,0.07),0 1px 4px rgba(0,0,0,0.04);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--base);font-family:'DM Sans',ui-sans-serif,system-ui,sans-serif;display:flex;justify-content:center;gap:24px;padding:40px;flex-wrap:wrap;}
+  body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 10% 10%,rgba(91,63,232,.08) 0%,transparent 55%),radial-gradient(ellipse 60% 50% at 85% 85%,rgba(11,171,160,.06) 0%,transparent 50%);pointer-events:none;}
+  .frame{position:relative;z-index:2;display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .step-label{font-family:'Sora',system-ui,sans-serif;font-size:10px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.08em;}
+  .phone{width:320px;height:693px;border-radius:38px;overflow:hidden;border:1px solid rgba(0,0,0,.08);box-shadow:0 30px 80px rgba(0,0,0,.1),inset 0 1px 0 rgba(255,255,255,.9);display:flex;flex-direction:column;position:relative;}
+  .status{padding:14px 20px 0;font-family:'Sora',system-ui,sans-serif;font-size:13px;font-weight:600;color:var(--text-primary);display:flex;justify-content:space-between;flex-shrink:0;}
+  .skip{font-family:'Sora',system-ui,sans-serif;font-size:12px;color:var(--text-secondary);padding:8px 20px 0;text-align:right;flex-shrink:0;}
+  .content{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 28px;text-align:center;gap:20px;}
+  .orb-sm{width:120px;height:120px;border-radius:50%;position:relative;background:radial-gradient(circle at 35% 35%,rgba(167,139,250,.95),rgba(91,63,232,.85) 40%,rgba(40,14,110,.9) 75%,rgba(18,6,50,.95));box-shadow:0 16px 48px rgba(91,63,232,.35),0 4px 12px rgba(91,63,232,.2);}
+  .orb-sm::after{content:'';position:absolute;width:32%;height:32%;top:14%;left:16%;border-radius:50%;background:rgba(255,255,255,.22);filter:blur(5px);}
+  .orb-sm-ring{position:absolute;inset:-16px;border-radius:50%;border:1px solid rgba(91,63,232,.2);animation:ring-expand 3s ease-out infinite;}
+  @keyframes ring-expand{0%{transform:scale(.7);opacity:.5;}100%{transform:scale(1.1);opacity:0;}}
+  .step-title{font-family:'Sora',system-ui,sans-serif;font-size:22px;font-weight:700;line-height:1.2;color:var(--text-primary);}
+  .step-sub{font-size:13px;color:var(--text-secondary);line-height:1.5;max-width:240px;}
+  .cta-btn{width:100%;padding:14px;border-radius:999px;border:none;cursor:pointer;font-family:'Sora',system-ui,sans-serif;font-size:14px;font-weight:600;background:linear-gradient(135deg,var(--aurora-violet),var(--aurora-magenta));color:#fff;box-shadow:0 6px 24px rgba(91,63,232,.35);}
+  .cta-ghost{background:transparent;border:1px solid rgba(0,0,0,.12);color:var(--text-secondary);}
+  .dots{display:flex;gap:6px;justify-content:center;padding-bottom:4px;}
+  .dot{width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,.1);}
+  .dot.active{width:20px;background:var(--aurora-violet);border-radius:3px;}
+  .progress-bar{width:100%;height:6px;background:rgba(0,0,0,.08);border-radius:3px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--aurora-violet),var(--aurora-teal));border-radius:3px;}
+  .icon-circle{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .icon-circle svg{width:36px;height:36px;}
+  .glass-box{background:var(--glass-fill);border:1px solid var(--glass-stroke);border-radius:20px;padding:16px;box-shadow:var(--shadow);width:100%;}
+</style>
+</head>
+<body>
+
+<!-- STEP 1: WELCOME -->
+<div class="frame">
+<div class="phone" style="background:rgba(247,245,242,.97);background-image:radial-gradient(ellipse 100% 80% at 50% 0%,rgba(91,63,232,.1) 0%,transparent 50%),radial-gradient(ellipse 80% 60% at 80% 90%,rgba(11,171,160,.07) 0%,transparent 50%);">
+  <div class="status"><span>9:41</span></div>
+  <div class="skip">Skip</div>
+  <div class="content">
+    <div style="position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;">
+      <div class="orb-sm-ring"></div>
+      <div class="orb-sm"></div>
+    </div>
+    <div>
+      <div class="step-title">Meet Aria</div>
+      <div class="step-sub" style="margin-top:8px;">Your private AI assistant. Everything runs on your phone — no cloud, no compromise.</div>
+    </div>
+    <div style="display:flex;gap:10px;width:100%;">
+      <div style="flex:1;background:rgba(91,63,232,.08);border:1px solid rgba(91,63,232,.15);border-radius:14px;padding:12px;text-align:center;"><div style="font-size:10px;color:var(--aurora-violet);font-weight:600;font-family:'Sora',system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Private</div><div style="font-size:11px;color:var(--text-secondary);">On-device only</div></div>
+      <div style="flex:1;background:rgba(11,171,160,.06);border:1px solid rgba(11,171,160,.15);border-radius:14px;padding:12px;text-align:center;"><div style="font-size:10px;color:var(--aurora-teal);font-weight:600;font-family:'Sora',system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Offline</div><div style="font-size:11px;color:var(--text-secondary);">No internet needed</div></div>
+    </div>
+    <button class="cta-btn">Get Started</button>
+  </div>
+  <div class="dots" style="padding-bottom:28px;"><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+</div>
+<div class="step-label">Step 1 · Welcome</div>
+</div>
+
+<!-- STEP 2: DOWNLOAD -->
+<div class="frame">
+<div class="phone" style="background:rgba(247,245,242,.97);">
+  <div class="status"><span>9:41</span></div>
+  <div class="content">
+    <div class="icon-circle" style="background:rgba(91,63,232,.1);border:1px solid rgba(91,63,232,.2);"><svg viewBox="0 0 24 24" style="fill:var(--aurora-violet)"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></div>
+    <div>
+      <div class="step-title">Downloading Aria</div>
+      <div class="step-sub" style="margin-top:8px;">Aria's AI model runs entirely on your device. This may take a few minutes on first launch.</div>
+    </div>
+    <div class="glass-box">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px;"><span style="color:var(--text-primary);">Gemma 4 Model</span><span style="color:var(--aurora-violet);font-weight:500;">38%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:38%"></div></div>
+      <div style="font-size:11px;color:var(--text-secondary);margin-top:8px;">1.4 GB / 3.7 GB · 4m remaining</div>
+    </div>
+    <div class="glass-box" style="text-align:left;">
+      <div style="font-size:12px;color:var(--text-primary);font-weight:500;margin-bottom:6px;">Included in this download</div>
+      <div style="font-size:11px;color:var(--text-secondary);line-height:1.8;">· Gemma 4 language model (3.7 GB)<br>· Whisper speech-to-text<br>· Piper TTS voice engine</div>
+    </div>
+  </div>
+  <div class="dots" style="padding-bottom:28px;"><div class="dot"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+</div>
+<div class="step-label">Step 2 · Download</div>
+</div>
+
+<!-- STEP 3: MICROPHONE -->
+<div class="frame">
+<div class="phone" style="background:rgba(247,245,242,.97);">
+  <div class="status"><span>9:41</span></div>
+  <div class="skip">Skip</div>
+  <div class="content">
+    <div class="icon-circle" style="background:rgba(11,171,160,.1);border:1px solid rgba(11,171,160,.2);"><svg viewBox="0 0 24 24" style="fill:var(--aurora-teal)"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1 1.93c-3.95-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.05 7.44-7 7.93V19h3v2H9v-2h2v-3.07z"/></svg></div>
+    <div>
+      <div class="step-title">Allow Microphone</div>
+      <div class="step-sub" style="margin-top:8px;">Aria needs microphone access to hear you. Your audio is processed locally and never transmitted.</div>
+    </div>
+    <div class="glass-box" style="text-align:left;padding:14px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--aurora-teal);"></div><div style="font-size:12px;color:var(--text-secondary);">Audio never leaves your device</div></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:8px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--aurora-teal);"></div><div style="font-size:12px;color:var(--text-secondary);">Transcription happens on-device only</div></div>
+    </div>
+    <button class="cta-btn">Allow Microphone Access</button>
+    <button class="cta-btn cta-ghost" style="font-size:13px;padding:11px;">Not now</button>
+  </div>
+  <div class="dots" style="padding-bottom:28px;"><div class="dot"></div><div class="dot"></div><div class="dot active"></div><div class="dot"></div></div>
+</div>
+<div class="step-label">Step 3 · Microphone</div>
+</div>
+
+<!-- STEP 4: WAKE WORD TEST -->
+<div class="frame">
+<div class="phone" style="background:rgba(247,245,242,.97);background-image:radial-gradient(ellipse 100% 80% at 50% 50%,rgba(11,171,160,.06) 0%,transparent 60%);">
+  <div class="status"><span>9:41</span></div>
+  <div class="content">
+    <div style="position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;">
+      <div class="orb-sm-ring"></div>
+      <div class="orb-sm" style="background:radial-gradient(circle at 35% 35%,rgba(104,234,196,.9),rgba(11,171,160,.8) 40%,rgba(4,80,70,.85) 75%,rgba(2,30,26,.9));box-shadow:0 16px 48px rgba(11,171,160,.35);animation:orb-pulse 2s ease-in-out infinite;"></div>
+    </div>
+    <div>
+      <div class="step-title">Try It Out</div>
+      <div class="step-sub" style="margin-top:8px;">Say <span style="color:var(--aurora-teal);font-weight:600;">"Hey Aria"</span> to wake me up, or tap the mic button to talk.</div>
+    </div>
+    <div class="glass-box" style="padding:12px 16px;">
+      <div style="display:flex;align-items:center;gap:8px;"><div style="width:8px;height:8px;border-radius:50%;background:var(--aurora-teal);animation:pulse 1.5s ease-in-out infinite;"></div><span style="font-size:13px;color:var(--text-secondary);">Listening for wake word…</span></div>
+    </div>
+    <button class="cta-btn">Finish Setup</button>
+  </div>
+  <div class="dots" style="padding-bottom:28px;"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot active"></div></div>
+</div>
+<div class="step-label">Step 4 · Test Wake Word</div>
+</div>
+
+<style>
+  @keyframes orb-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
+  @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+</style>
+</body>
+</html>

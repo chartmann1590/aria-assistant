@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Block all cleartext (HTTP) traffic in production. Aria is an offline-first app;
+    the only network calls are model downloads (HTTPS) and optional web search (HTTPS).
+    Debug builds additionally trust user-installed CAs for proxy inspection.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>
