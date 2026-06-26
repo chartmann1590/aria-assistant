@@ -84,3 +84,36 @@
 # ── Compose (suppress R8 warnings from generated code) ───────────────────────
 -dontwarn androidx.compose.**
 -keep class androidx.compose.runtime.** { *; }
+
+# ── Retrofit ──────────────────────────────────────────────────────────────────
+-keepattributes Signature, InnerClasses, EnclosingMethod, Exceptions
+-keepattributes *Annotation*, RuntimeVisibleAnnotations, RuntimeInvisibleAnnotations
+-keepclassmembers,allowshrinking,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
+}
+-dontwarn org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+-dontwarn javax.annotation.**
+-dontwarn kotlin.Unit
+-dontwarn retrofit2.KotlinExtensions
+-dontwarn retrofit2.KotlinExtensions$*
+
+# ── OkHttp / Okio ─────────────────────────────────────────────────────────────
+-dontwarn okhttp3.**
+-dontwarn okio.**
+
+# ── Kotlin Serialization ──────────────────────────────────────────────────────
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.AnnotationsKt
+-keepclassmembers class kotlinx.serialization.json.** {
+    *** Companion;
+}
+-keepclasseswithmembers class kotlinx.serialization.json.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}
+-keep,includedescriptorclasses class com.aria.assistant.data.feedback.**$$serializer { *; }
+-keepclassmembers class com.aria.assistant.data.feedback.** {
+    *** Companion;
+}
+-keepclasseswithmembers class com.aria.assistant.data.feedback.** {
+    kotlinx.serialization.KSerializer serializer(...);
+}

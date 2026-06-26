@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -27,6 +28,26 @@ android {
             }
         } else false
         buildConfigField("boolean", "DEBUG_MODE", debugEnabled.toString())
+
+        fun readProp(name: String): String {
+            if (localProps.exists()) {
+                localProps.useLines { lines ->
+                    lines.find { it.trimStart().startsWith(name) }
+                        ?.substringAfter("=")?.trim()?.takeIf { it.isNotEmpty() }
+                        ?.let { return it }
+                }
+            }
+            return project.findProperty(name) as? String ?: ""
+        }
+
+        val githubApiToken = readProp("github.api.token")
+        val githubRepoOwner = readProp("github.repo.owner")
+        val githubRepoName = readProp("github.repo.name")
+
+        buildConfigField("String", "GITHUB_API_TOKEN", "\"${githubApiToken}\"")
+        buildConfigField("String", "GITHUB_REPO_OWNER", "\"${githubRepoOwner}\"")
+        buildConfigField("String", "GITHUB_REPO_NAME", "\"${githubRepoName}\"")
+        buildConfigField("String", "FEEDBACK_ASSETS_DIR", "\"feedback-assets\"")
     }
 
     buildTypes {
@@ -90,6 +111,12 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.coroutines.android)
     implementation(libs.datastore.preferences)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.kotlinx.serialization.converter)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.activity.compose)
     implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.litertlm.android)
     implementation(libs.play.services.location)
