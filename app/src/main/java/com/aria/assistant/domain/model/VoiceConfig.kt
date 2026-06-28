@@ -7,5 +7,7 @@ data class VoiceConfig(
     val ttsPitch: Float = 1.0f,
     val language: String = "en-US",
     val selectedVoice: String = "en_US-amy-medium",
-    val temperatureUnit: String = "celsius"
+    val temperatureUnit: String = "celsius",
+    val privacyMode: Boolean = false,
+    val selectedModel: String = "E2B"
 )

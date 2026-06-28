@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -47,10 +48,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aria.assistant.domain.model.AriaState
@@ -101,39 +106,73 @@ fun MainScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                    .padding(horizontal = 20.dp, vertical = 14.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Aria",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = TextPrimary
-                )
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                // Lowercase "aria" wordmark with violet dot accent
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "aria",
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            letterSpacing = (-0.5f).sp
+                        ),
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.size(5.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .background(
+                                Brush.radialGradient(listOf(AuroraViolet, AuroraMagenta)),
+                                CircleShape
+                            )
+                    )
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     GlassIconButton(onClick = onNavigateToHistory) {
-                        Icon(Icons.Default.History, contentDescription = "History", tint = TextSecondary, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.History,
+                            contentDescription = "History",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(19.dp)
+                        )
                     }
                     GlassIconButton(onClick = onNavigateToPremium) {
-                        Icon(Icons.Default.Star, contentDescription = "Premium", tint = AuroraAmber, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.Star,
+                            contentDescription = "Premium",
+                            tint = AuroraAmber,
+                            modifier = Modifier.size(19.dp)
+                        )
                     }
                     GlassIconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = TextSecondary, modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Outlined.Settings,
+                            contentDescription = "Settings",
+                            tint = TextSecondary,
+                            modifier = Modifier.size(19.dp)
+                        )
                     }
                 }
             }
 
-            // ── Orb + state label ────────────────────────────────────────────
+            // ── Orb hero zone ────────────────────────────────────────────────
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
+                    .weight(1.4f),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 AriaOrb(state = ariaState)
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 val stateLabel = when (ariaState) {
                     AriaState.DOWNLOADING -> {
@@ -152,19 +191,19 @@ fun MainScreen(
                 Text(
                     text = stateLabel,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = ariaState.color().copy(alpha = 0.85f)
+                    color = ariaState.color().copy(alpha = 0.90f)
                 )
 
                 if (ariaState == AriaState.DOWNLOADING) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     LinearProgressIndicator(
                         progress = { downloadInfo.totalProgress.coerceIn(0f, 1f) },
                         modifier = Modifier
-                            .fillMaxWidth(0.65f)
-                            .height(4.dp)
+                            .fillMaxWidth(0.60f)
+                            .height(3.dp)
                             .clip(RoundedCornerShape(2.dp)),
                         color = AuroraViolet,
-                        trackColor = Color.White.copy(alpha = 0.1f)
+                        trackColor = Color.White.copy(alpha = 0.08f)
                     )
                     val parts = buildList {
                         if (downloadInfo.gemmaProgress > 0) add("Gemma: ${(downloadInfo.gemmaProgress * 100).toInt()}%")
@@ -174,7 +213,7 @@ fun MainScreen(
                     if (parts.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = parts.joinToString(" • "),
+                            text = parts.joinToString("  ·  "),
                             style = MaterialTheme.typography.labelSmall,
                             color = TextTertiary
                         )
@@ -182,12 +221,12 @@ fun MainScreen(
                 }
 
                 if (streamingText.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = streamingText,
                         style = MaterialTheme.typography.bodyMedium,
                         color = TextPrimary,
-                        modifier = Modifier.padding(horizontal = 24.dp)
+                        modifier = Modifier.padding(horizontal = 28.dp)
                     )
                 }
             }
@@ -196,7 +235,7 @@ fun MainScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
+                    .weight(0.9f)
                     .padding(horizontal = 16.dp),
                 reverseLayout = true,
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -206,106 +245,121 @@ fun MainScreen(
                 }
             }
 
-            // ── Glass input bar ──────────────────────────────────────────────
-            Row(
+            // ── Floating input bar ───────────────────────────────────────────
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 24.dp, top = 8.dp)
-                    .background(Color.White.copy(alpha = 0.045f), RoundedCornerShape(999.dp))
-                    .border(0.5.dp, Color.White.copy(alpha = 0.09f), RoundedCornerShape(999.dp))
-                    .padding(horizontal = 6.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    .padding(horizontal = 14.dp)
+                    .padding(bottom = 20.dp, top = 6.dp)
             ) {
-                BasicTextField(
-                    value = textInput,
-                    onValueChange = { textInput = it },
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary),
-                    singleLine = true,
-                    cursorBrush = SolidColor(AuroraViolet),
-                    enabled = ariaState == AriaState.IDLE || ariaState == AriaState.MUTED,
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                    decorationBox = { inner ->
-                        if (textInput.isEmpty()) {
-                            Text(
-                                "Type a message…",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = TextTertiary
+                        .fillMaxWidth()
+                        .drawBehind {
+                            drawRect(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        AuroraViolet.copy(alpha = 0.09f),
+                                        Color.Transparent
+                                    ),
+                                    center = Offset(size.width / 2f, size.height / 2f),
+                                    radius = size.width * 0.6f
+                                )
                             )
                         }
-                        inner()
-                    }
-                )
-
-                // Send
-                IconButton(
-                    onClick = {
-                        if (textInput.isNotBlank()) {
-                            viewModel.sendMessage(textInput)
-                            textInput = ""
-                        }
-                    },
-                    enabled = textInput.isNotBlank() && (ariaState == AriaState.IDLE || ariaState == AriaState.MUTED),
-                    modifier = Modifier.size(36.dp)
+                        .background(Color.White.copy(alpha = 0.055f), RoundedCornerShape(999.dp))
+                        .border(0.7.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(999.dp))
+                        .padding(horizontal = 6.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.Send,
-                        contentDescription = "Send",
-                        tint = if (textInput.isNotBlank() && (ariaState == AriaState.IDLE || ariaState == AriaState.MUTED))
-                            AuroraAmber else TextTertiary,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
-
-                // Mic FAB
-                val isActive = ariaState == AriaState.LISTENING ||
-                    ariaState == AriaState.PROCESSING ||
-                    ariaState == AriaState.SPEAKING ||
-                    ariaState == AriaState.WAKING_UP
-                FloatingActionButton(
-                    onClick = {
-                        if (viewModel.needsMicPermission()) {
-                            micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                        } else {
-                            viewModel.triggerListening()
-                        }
-                    },
-                    modifier = Modifier.size(44.dp),
-                    shape = CircleShape,
-                    containerColor = Color.Transparent,
-                    contentColor = Color.White,
-                    elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
-                ) {
-                    val fabBg = if (ariaState == AriaState.MUTED)
-                        Brush.linearGradient(listOf(AuroraAmber, Color(0xFFF97316)))
-                    else if (isActive)
-                        Brush.linearGradient(listOf(AuroraTeal, AuroraViolet))
-                    else
-                        Brush.linearGradient(listOf(AuroraViolet, AuroraMagenta))
-
-                    androidx.compose.foundation.layout.Box(
+                    BasicTextField(
+                        value = textInput,
+                        onValueChange = { textInput = it },
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(color = TextPrimary),
+                        singleLine = true,
+                        cursorBrush = SolidColor(AuroraViolet),
+                        enabled = ariaState == AriaState.IDLE || ariaState == AriaState.MUTED,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .background(fabBg, CircleShape),
-                        contentAlignment = Alignment.Center
+                            .weight(1f)
+                            .padding(horizontal = 14.dp, vertical = 5.dp),
+                        decorationBox = { inner ->
+                            if (textInput.isEmpty()) {
+                                Text(
+                                    "Type a message…",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = TextTertiary
+                                )
+                            }
+                            inner()
+                        }
+                    )
+
+                    val canSend = textInput.isNotBlank() && (ariaState == AriaState.IDLE || ariaState == AriaState.MUTED)
+                    IconButton(
+                        onClick = {
+                            if (textInput.isNotBlank()) {
+                                viewModel.sendMessage(textInput)
+                                textInput = ""
+                            }
+                        },
+                        enabled = canSend,
+                        modifier = Modifier.size(38.dp)
                     ) {
                         Icon(
-                            imageVector = when {
-                                ariaState == AriaState.MUTED -> Icons.Default.MicOff
-                                isActive -> Icons.Default.Stop
-                                else -> Icons.Default.Mic
-                            },
-                            contentDescription = when {
-                                ariaState == AriaState.MUTED -> "Unmute"
-                                isActive -> "Stop"
-                                else -> "Listen"
-                            },
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "Send",
+                            tint = if (canSend) AuroraAmber else TextTertiary,
+                            modifier = Modifier.size(18.dp)
                         )
+                    }
+
+                    val isActive = ariaState == AriaState.LISTENING ||
+                        ariaState == AriaState.PROCESSING ||
+                        ariaState == AriaState.SPEAKING ||
+                        ariaState == AriaState.WAKING_UP
+
+                    val fabGradient = when {
+                        ariaState == AriaState.MUTED -> Brush.linearGradient(listOf(AuroraAmber, Color(0xFFF97316)))
+                        isActive -> Brush.linearGradient(listOf(AuroraTeal, AuroraViolet))
+                        else -> Brush.linearGradient(listOf(AuroraViolet, AuroraMagenta))
+                    }
+
+                    FloatingActionButton(
+                        onClick = {
+                            if (viewModel.needsMicPermission()) {
+                                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            } else {
+                                viewModel.triggerListening()
+                            }
+                        },
+                        modifier = Modifier.size(46.dp),
+                        shape = CircleShape,
+                        containerColor = Color.Transparent,
+                        contentColor = Color.White,
+                        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(fabGradient, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = when {
+                                    ariaState == AriaState.MUTED -> Icons.Default.MicOff
+                                    isActive -> Icons.Default.Stop
+                                    else -> Icons.Default.Mic
+                                },
+                                contentDescription = when {
+                                    ariaState == AriaState.MUTED -> "Unmute"
+                                    isActive -> "Stop"
+                                    else -> "Listen"
+                                },
+                                tint = Color.White,
+                                modifier = Modifier.size(21.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -318,9 +372,9 @@ private fun GlassIconButton(onClick: () -> Unit, content: @Composable () -> Unit
     IconButton(
         onClick = onClick,
         modifier = Modifier
-            .size(38.dp)
-            .background(Color.White.copy(alpha = 0.06f), CircleShape)
-            .border(0.5.dp, Color.White.copy(alpha = 0.08f), CircleShape)
+            .size(40.dp)
+            .background(Color.White.copy(alpha = 0.07f), CircleShape)
+            .border(0.7.dp, Color.White.copy(alpha = 0.10f), CircleShape)
     ) {
         content()
     }

@@ -19,8 +19,8 @@ fun GlassCard(
 ) {
     Box(
         modifier = modifier
-            .background(Color.White.copy(alpha = 0.045f), shape)
-            .border(0.5.dp, Color.White.copy(alpha = 0.09f), shape),
+            .background(Color.White.copy(alpha = 0.06f), shape)
+            .border(0.7.dp, Color.White.copy(alpha = 0.11f), shape),
         content = content
     )
 }

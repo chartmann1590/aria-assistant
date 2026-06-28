@@ -64,6 +64,9 @@ class AriaForegroundService : Service() {
     private var whisperAvailable = false
     private var conversationJob: Job? = null
     @Volatile private var wakeWordEnabled = true
+    @Volatile private var wakeWordSensitivity = 0.5f
+    @Volatile private var privacyMode = false
+    @Volatile private var languageCode = "en-US"
 
     override fun onCreate() {
         super.onCreate()
@@ -77,7 +80,10 @@ class AriaForegroundService : Service() {
         serviceScope.launch {
             settingsRepository.getVoiceConfig().collect { config ->
                 wakeWordEnabled = config.wakeWordEnabled
-                AriaLogger.d("AriaForegroundService", "Wake word enabled changed: $wakeWordEnabled")
+                wakeWordSensitivity = config.wakeWordSensitivity
+                privacyMode = config.privacyMode
+                languageCode = config.language
+                AriaLogger.d("AriaForegroundService", "Settings: wake=$wakeWordEnabled, sensitivity=$wakeWordSensitivity, privacy=$privacyMode, lang=$languageCode")
                 if (!config.wakeWordEnabled) {
                     wakeWordDetector.stop()
                     AriaLogger.d("AriaForegroundService", "Wake word detector stopped (disabled in settings)")
@@ -126,7 +132,7 @@ class AriaForegroundService : Service() {
     }
 
     private fun startWakeWordDetection() {
-        wakeWordDetector.start(threshold = 0.5f) {
+        wakeWordDetector.start(threshold = wakeWordSensitivity) {
             serviceScope.launch { startConversation() }
         }
     }
@@ -196,7 +202,7 @@ class AriaForegroundService : Service() {
         updateNotification(AriaState.LISTENING)
         playActivationPing()
 
-        val transcript = recognizeWithAndroidSTT()
+        val transcript = recognizeSpeech()
         if (transcript.isBlank()) {
             AriaLogger.d("AriaForegroundService", "First listen empty, resuming wake word")
             stateManager.setState(AriaState.IDLE)
@@ -251,7 +257,7 @@ class AriaForegroundService : Service() {
             updateNotification(AriaState.LISTENING)
             playActivationPing()
 
-            val transcript = recognizeWithAndroidSTT()
+            val transcript = recognizeSpeech()
             if (transcript.isBlank()) {
                 conversationRound++
                 kotlinx.coroutines.delay(1500)
@@ -301,7 +307,7 @@ class AriaForegroundService : Service() {
 
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US")
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, languageCode.replace('_', '-'))
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
             putExtra("android.speech.extra.DICTATION_MODE", true)
@@ -404,6 +410,21 @@ class AriaForegroundService : Service() {
         }
 
         return result
+    }
+
+    private suspend fun recognizeSpeech(): String {
+        return if (privacyMode && whisperAvailable) {
+            recognizeWithOnDeviceSTT()
+        } else {
+            recognizeWithAndroidSTT()
+        }
+    }
+
+    private suspend fun recognizeWithOnDeviceSTT(): String {
+        AriaLogger.d("AriaForegroundService", "Using on-device Whisper STT")
+        val audio = captureSpeech()
+        if (audio.isEmpty()) return ""
+        return whisperSTT.transcribe(audio)
     }
 
     private suspend fun playActivationPing() {

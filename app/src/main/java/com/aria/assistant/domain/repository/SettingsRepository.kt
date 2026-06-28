@@ -12,4 +12,6 @@ interface SettingsRepository {
     suspend fun setPremiumEnabled(enabled: Boolean)
     fun isBootStartEnabled(): Flow<Boolean>
     suspend fun setBootStartEnabled(enabled: Boolean)
+    suspend fun updatePrivacyMode(enabled: Boolean)
+    suspend fun updateSelectedModel(model: String)
 }

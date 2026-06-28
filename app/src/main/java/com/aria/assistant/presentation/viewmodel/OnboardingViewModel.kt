@@ -38,8 +38,17 @@ class OnboardingViewModel @Inject constructor(
     private val _downloadState = MutableStateFlow(OnboardingDownloadState())
     val downloadState: StateFlow<OnboardingDownloadState> = _downloadState.asStateFlow()
 
-    private val modelUrl = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
-    private val modelFilename = "gemma-4-E2B-it.litertlm"
+    companion object {
+        private const val MODEL_E2B_URL = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
+        private const val MODEL_E2B_FILENAME = "gemma-4-E2B-it.litertlm"
+        private const val MODEL_E4B_URL = "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm"
+        private const val MODEL_E4B_FILENAME = "gemma-4-E4B-it.litertlm"
+    }
+
+    private fun modelUrlFor(model: String): Pair<String, String> {
+        return if (model == "E4B") MODEL_E4B_URL to MODEL_E4B_FILENAME
+        else MODEL_E2B_URL to MODEL_E2B_FILENAME
+    }
 
     init {
         viewModelScope.launch {
@@ -86,7 +95,8 @@ class OnboardingViewModel @Inject constructor(
 
     fun startModelDownload() {
         if (_downloadState.value.isDownloading || _downloadState.value.isReady) return
-        val cached = downloadManager.getCachedModelPath(modelFilename)
+        val (url, filename) = modelUrlFor("E2B")
+        val cached = downloadManager.getCachedModelPath(filename)
         if (cached != null) {
             AriaLogger.d("OnboardingVM", "Model already cached, initializing")
             _downloadState.value = _downloadState.value.copy(isInitializing = true, progress = 1f)
@@ -94,7 +104,7 @@ class OnboardingViewModel @Inject constructor(
         } else {
             AriaLogger.d("OnboardingVM", "Starting model download")
             _downloadState.value = _downloadState.value.copy(isDownloading = true)
-            viewModelScope.launch { downloadManager.downloadModel(modelUrl, modelFilename) }
+            viewModelScope.launch { downloadManager.downloadModel(url, filename) }
         }
     }
 

@@ -11,7 +11,10 @@ import com.aria.assistant.skill.AppLaunchSkill
 import com.aria.assistant.skill.CalendarSkill
 import com.aria.assistant.skill.CallSkill
 import com.aria.assistant.skill.CameraSkill
+import com.aria.assistant.skill.ClipboardSkill
 import com.aria.assistant.skill.DeviceInfoSkill
+import com.aria.assistant.skill.EmailSkill
+import com.aria.assistant.skill.FlashlightSkill
 import com.aria.assistant.skill.LocationSkill
 import com.aria.assistant.skill.MediaSkill
 import com.aria.assistant.skill.MessageSkill
@@ -19,6 +22,7 @@ import com.aria.assistant.skill.NotificationSkill
 import com.aria.assistant.skill.ScreenControlSkill
 import com.aria.assistant.skill.SettingsSkill
 import com.aria.assistant.skill.TimerSkill
+import com.aria.assistant.skill.UnitConversionSkill
 import com.aria.assistant.skill.WebSearchSkill
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONObject
@@ -151,7 +155,7 @@ class ListAppsTool @Inject constructor(
     override val paramSchema = """{"filter": "music"}"""
     override val requiresPremium = false
     override suspend fun execute(params: JSONObject): ToolResult {
-        return ToolResult.fromSkillResult(appLaunchSkill.listApps(params.optString("filter", null)))
+        return ToolResult.fromSkillResult(appLaunchSkill.listApps(params.optString("filter", "").ifBlank { null }))
     }
 }
 
@@ -309,7 +313,7 @@ class CreateCalendarEventTool @Inject constructor(
             params.optString("title", ""),
             params.optLong("start_ms", 0),
             if (params.has("end_ms")) params.optLong("end_ms") else null,
-            params.optString("location", null)
+            params.optString("location", "").ifBlank { null }
         ))
     }
 }
@@ -324,9 +328,9 @@ class SetReminderTool @Inject constructor(
     override val requiresPremium = true
     override suspend fun execute(params: JSONObject): ToolResult {
         return ToolResult.fromSkillResult(calendarSkill.setReminder(
-            params.optString("event_id", null),
+            params.optString("event_id", "").ifBlank { null },
             params.optInt("minutes_before", 15),
-            params.optString("label", null)
+            params.optString("label", "").ifBlank { null }
         ))
     }
 }
@@ -340,7 +344,7 @@ class ReadNotificationsTool @Inject constructor(
     override val paramSchema = """{"filter": "messages"}"""
     override val requiresPremium = true
     override suspend fun execute(params: JSONObject): ToolResult {
-        return ToolResult.fromSkillResult(notificationSkill.readActive(params.optString("filter", null)))
+        return ToolResult.fromSkillResult(notificationSkill.readActive(params.optString("filter", "").ifBlank { null }))
     }
 }
 
@@ -368,7 +372,7 @@ class TakePhotoTool @Inject constructor(
     override val paramSchema = """{"label": "document"}"""
     override val requiresPremium = true
     override suspend fun execute(params: JSONObject): ToolResult {
-        return ToolResult.fromSkillResult(cameraSkill.takePhoto(params.optString("label", null)))
+        return ToolResult.fromSkillResult(cameraSkill.takePhoto(params.optString("label", "").ifBlank { null }))
     }
 }
 
@@ -396,7 +400,7 @@ class ReadScreenTool @Inject constructor(
     override val paramSchema = """{}"""
     override val requiresPremium = true
     override suspend fun execute(params: JSONObject): ToolResult {
-        return ToolResult.fromSkillResult(screenControlSkill.readScreen(params.optString("detail", null)))
+        return ToolResult.fromSkillResult(screenControlSkill.readScreen(params.optString("detail", "").ifBlank { null }))
     }
 }
 
@@ -424,6 +428,221 @@ class ScrollTool @Inject constructor(
     override suspend fun execute(params: JSONObject): ToolResult {
         return ToolResult.fromSkillResult(screenControlSkill.scroll(
             params.optString("direction", "down")
+        ))
+    }
+}
+
+// --- Orphaned skill tools (were implemented but unwrapped) ---
+
+@Singleton
+class CancelTimerTool @Inject constructor(
+    private val timerSkill: TimerSkill
+) : Tool {
+    override val name = "cancel_timer"
+    override val description = "Cancel an active timer"
+    override val paramSchema = """{}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(timerSkill.cancelTimer())
+    }
+}
+
+@Singleton
+class CancelAlarmTool @Inject constructor(
+    private val alarmSkill: AlarmSkill
+) : Tool {
+    override val name = "cancel_alarm"
+    override val description = "Cancel an existing alarm"
+    override val paramSchema = """{"alarm_id": ""}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(alarmSkill.cancelAlarm(params.optString("alarm_id", "")))
+    }
+}
+
+@Singleton
+class ReadLastCallsTool @Inject constructor(
+    private val callSkill: CallSkill
+) : Tool {
+    override val name = "read_last_calls"
+    override val description = "Read recent call history"
+    override val paramSchema = """{"limit": 5}"""
+    override val requiresPremium = true
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(callSkill.readLastCall(
+            if (params.has("limit")) params.optInt("limit") else null
+        ))
+    }
+}
+
+@Singleton
+class AnswerCallTool @Inject constructor(
+    private val callSkill: CallSkill
+) : Tool {
+    override val name = "answer_call"
+    override val description = "Answer an incoming phone call"
+    override val paramSchema = """{}"""
+    override val requiresPremium = true
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(callSkill.answerCall())
+    }
+}
+
+@Singleton
+class RejectCallTool @Inject constructor(
+    private val callSkill: CallSkill
+) : Tool {
+    override val name = "reject_call"
+    override val description = "Reject an incoming phone call"
+    override val paramSchema = """{}"""
+    override val requiresPremium = true
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(callSkill.rejectCall())
+    }
+}
+
+@Singleton
+class NearbySearchTool @Inject constructor(
+    private val locationSkill: LocationSkill
+) : Tool {
+    override val name = "nearby_search"
+    override val description = "Search for places nearby (e.g. coffee shops, gas stations)"
+    override val paramSchema = """{"query": "coffee shop"}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(locationSkill.nearby(params.optString("query", "")))
+    }
+}
+
+@Singleton
+class ReverseGeocodeTool @Inject constructor(
+    private val locationSkill: LocationSkill
+) : Tool {
+    override val name = "reverse_geocode"
+    override val description = "Get address from latitude and longitude coordinates"
+    override val paramSchema = """{"lat": 37.7749, "lng": -122.4194}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(locationSkill.reverseGeocode(
+            params.optDouble("lat", 0.0), params.optDouble("lng", 0.0)
+        ))
+    }
+}
+
+@Singleton
+class GetStorageTool @Inject constructor(
+    private val deviceInfoSkill: DeviceInfoSkill
+) : Tool {
+    override val name = "get_storage"
+    override val description = "Get device storage usage information"
+    override val paramSchema = """{}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(deviceInfoSkill.storage())
+    }
+}
+
+@Singleton
+class ShareToWhatsAppTool @Inject constructor(
+    private val messageSkill: MessageSkill
+) : Tool {
+    override val name = "share_to_whatsapp"
+    override val description = "Share a message via WhatsApp"
+    override val paramSchema = """{"contact": "Mom", "message": "Hello!"}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(messageSkill.shareToWhatsApp(
+            params.optString("contact", ""), params.optString("message", "")
+        ))
+    }
+}
+
+@Singleton
+class ShareToTelegramTool @Inject constructor(
+    private val messageSkill: MessageSkill
+) : Tool {
+    override val name = "share_to_telegram"
+    override val description = "Share a message via Telegram"
+    override val paramSchema = """{"contact": "Mom", "message": "Hello!"}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(messageSkill.shareToTelegram(
+            params.optString("contact", ""), params.optString("message", "")
+        ))
+    }
+}
+
+// --- Phase 1 new skills ---
+
+@Singleton
+class FlashlightTool @Inject constructor(
+    private val flashlightSkill: FlashlightSkill
+) : Tool {
+    override val name = "flashlight"
+    override val description = "Turn the flashlight on or off"
+    override val paramSchema = """{"on": true}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(flashlightSkill.setFlashlight(params.optBoolean("on", true)))
+    }
+}
+
+@Singleton
+class ClipboardReadTool @Inject constructor(
+    private val clipboardSkill: ClipboardSkill
+) : Tool {
+    override val name = "clipboard_read"
+    override val description = "Read the current clipboard content"
+    override val paramSchema = """{}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(clipboardSkill.read())
+    }
+}
+
+@Singleton
+class ClipboardWriteTool @Inject constructor(
+    private val clipboardSkill: ClipboardSkill
+) : Tool {
+    override val name = "clipboard_write"
+    override val description = "Write text to the clipboard"
+    override val paramSchema = """{"text": "text to copy"}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(clipboardSkill.write(params.optString("text", "")))
+    }
+}
+
+@Singleton
+class EmailComposeTool @Inject constructor(
+    private val emailSkill: EmailSkill
+) : Tool {
+    override val name = "email_compose"
+    override val description = "Open the email app to compose a message"
+    override val paramSchema = """{"to": "friend@example.com", "subject": "Hello", "body": "How are you?"}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(emailSkill.compose(
+            params.optString("to", "").ifBlank { null },
+            params.optString("subject", "").ifBlank { null },
+            params.optString("body", "").ifBlank { null }
+        ))
+    }
+}
+
+@Singleton
+class ConvertTool @Inject constructor(
+    private val unitConversionSkill: UnitConversionSkill
+) : Tool {
+    override val name = "convert"
+    override val description = "Convert between units (length, weight, volume, speed, temperature)"
+    override val paramSchema = """{"value": 100, "from": "kilometers", "to": "miles"}"""
+    override val requiresPremium = false
+    override suspend fun execute(params: JSONObject): ToolResult {
+        return ToolResult.fromSkillResult(unitConversionSkill.convert(
+            params.optDouble("value", 0.0),
+            params.optString("from", ""),
+            params.optString("to", "")
         ))
     }
 }

@@ -46,25 +46,25 @@ fun NebulaBackground(
             // Violet blob — top-left, drifts slowly
             drawRect(
                 brush = Brush.radialGradient(
-                    colors = listOf(AuroraViolet.copy(alpha = 0.18f), Color.Transparent),
+                    colors = listOf(AuroraViolet.copy(alpha = 0.24f), Color.Transparent),
                     center = Offset(w * (0.15f + drift * 0.10f), h * (0.20f - drift * 0.08f)),
-                    radius = h * 0.55f
+                    radius = h * 0.58f
                 )
             )
             // Magenta blob — top-right
             drawRect(
                 brush = Brush.radialGradient(
-                    colors = listOf(AuroraMagenta.copy(alpha = 0.12f), Color.Transparent),
+                    colors = listOf(AuroraMagenta.copy(alpha = 0.17f), Color.Transparent),
                     center = Offset(w * (0.85f - drift * 0.08f), h * (0.10f + drift * 0.05f)),
-                    radius = h * 0.45f
+                    radius = h * 0.48f
                 )
             )
             // Teal blob — bottom-right
             drawRect(
                 brush = Brush.radialGradient(
-                    colors = listOf(AuroraTeal.copy(alpha = 0.13f), Color.Transparent),
+                    colors = listOf(AuroraTeal.copy(alpha = 0.18f), Color.Transparent),
                     center = Offset(w * (0.75f + drift * 0.06f), h * (0.85f - drift * 0.04f)),
-                    radius = h * 0.50f
+                    radius = h * 0.53f
                 )
             )
         }

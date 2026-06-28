@@ -70,6 +70,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -216,6 +217,45 @@ fun SettingsScreen(
 
                 SectionLabel("Preferences")
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    SettingRow(label = "Privacy Mode", sub = "Process speech entirely on-device (Whisper STT)") {
+                        Switch(
+                            checked = voiceConfig.privacyMode,
+                            onCheckedChange = { viewModel.updatePrivacyMode(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = AuroraTeal,
+                                uncheckedThumbColor = Color.White,
+                                uncheckedTrackColor = Color.White.copy(alpha = 0.15f)
+                            )
+                        )
+                    }
+                    SettingRow(label = "Model", sub = if (voiceConfig.selectedModel == "E4B") "Gemma E4B (Premium)" else "Gemma E2B (Default)") {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = voiceConfig.selectedModel,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary,
+                                modifier = Modifier.padding(end = 8.dp)
+                            )
+                            Switch(
+                                checked = voiceConfig.selectedModel == "E4B",
+                                onCheckedChange = { checked ->
+                                    if (checked && !isPremium) {
+                                        onUpgrade()
+                                    } else {
+                                        viewModel.updateSelectedModel(if (checked) "E4B" else "E2B")
+                                    }
+                                },
+                                enabled = !(voiceConfig.selectedModel == "E2B" && isPremium),
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = if (isPremium) AuroraViolet else TextTertiary,
+                                    uncheckedThumbColor = Color.White,
+                                    uncheckedTrackColor = Color.White.copy(alpha = 0.15f)
+                                )
+                            )
+                        }
+                    }
                     SettingRow(label = "Temperature Unit") {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
@@ -368,9 +408,9 @@ fun SettingsScreen(
 private fun SectionLabel(text: String) {
     Text(
         text = text.uppercase(),
-        style = MaterialTheme.typography.labelSmall,
-        color = TextTertiary,
-        modifier = Modifier.padding(start = 4.dp, bottom = 8.dp, top = 4.dp)
+        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.2.sp),
+        color = TextSecondary,
+        modifier = Modifier.padding(start = 6.dp, bottom = 10.dp, top = 6.dp)
     )
 }
 
@@ -383,12 +423,13 @@ private fun SettingRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = 18.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(label, style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
             if (sub != null) {
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(sub, style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             }
         }
@@ -450,19 +491,22 @@ private fun VoiceItem(
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Avatar initials
+        // Avatar initials — unique gradient per voice initial
+        val avatarGradient = when (voice.displayName.take(1).uppercase()) {
+            "A", "E", "I" -> Brush.linearGradient(listOf(AuroraViolet, AuroraMagenta))
+            "N", "O", "U" -> Brush.linearGradient(listOf(AuroraTeal, AuroraViolet))
+            else -> Brush.linearGradient(listOf(AuroraMagenta, AuroraTeal))
+        }
         androidx.compose.foundation.layout.Box(
             modifier = Modifier
-                .size(36.dp)
-                .background(
-                    Brush.linearGradient(listOf(AuroraViolet, AuroraTeal)),
-                    CircleShape
-                ),
+                .size(40.dp)
+                .background(avatarGradient, CircleShape)
+                .border(1.dp, Color.White.copy(alpha = 0.15f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = voice.displayName.take(1).uppercase(),
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelLarge,
                 color = Color.White
             )
         }

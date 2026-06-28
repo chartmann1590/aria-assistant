@@ -75,6 +75,18 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun updatePrivacyMode(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.updatePrivacyMode(enabled)
+        }
+    }
+
+    fun updateSelectedModel(model: String) {
+        viewModelScope.launch {
+            settingsRepository.updateSelectedModel(model)
+        }
+    }
+
     fun updateSelectedVoice(voiceId: String) {
         if (_voiceConfig.value.selectedVoice == voiceId) return
         viewModelScope.launch {

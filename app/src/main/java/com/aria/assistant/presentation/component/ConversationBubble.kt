@@ -61,13 +61,13 @@ fun ConversationBubble(message: ConversationMessage) {
                         .background(
                             Brush.linearGradient(
                                 listOf(
-                                    AuroraViolet.copy(alpha = 0.22f),
-                                    Color(0xFFC04AE0).copy(alpha = 0.14f)
+                                    AuroraViolet.copy(alpha = 0.28f),
+                                    Color(0xFFC04AE0).copy(alpha = 0.18f)
                                 )
                             )
                         )
-                        .border(0.5.dp, AuroraViolet.copy(alpha = 0.25f), userBubbleShape)
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                        .border(0.7.dp, AuroraViolet.copy(alpha = 0.32f), userBubbleShape)
+                        .padding(horizontal = 16.dp, vertical = 11.dp)
                 )
             } else {
                 // Aria bubble: glass surface + violet→teal left accent via drawBehind
@@ -78,18 +78,18 @@ fun ConversationBubble(message: ConversationMessage) {
                     color = TextPrimary,
                     modifier = Modifier
                         .clip(ariaBubbleShape)
-                        .background(Color.White.copy(alpha = 0.045f))
-                        .border(0.5.dp, Color.White.copy(alpha = 0.09f), ariaBubbleShape)
+                        .background(Color.White.copy(alpha = 0.06f))
+                        .border(0.7.dp, Color.White.copy(alpha = 0.11f), ariaBubbleShape)
                         .drawBehind {
-                            val barW = 2.dp.toPx()
-                            val inset = size.height * 0.12f
+                            val barW = 2.5.dp.toPx()
+                            val inset = size.height * 0.10f
                             drawRect(
                                 brush = barBrush,
                                 topLeft = Offset(0f, inset),
                                 size = Size(barW, size.height - inset * 2)
                             )
                         }
-                        .padding(start = 14.dp, end = 14.dp, top = 10.dp, bottom = 10.dp)
+                        .padding(start = 15.dp, end = 14.dp, top = 11.dp, bottom = 11.dp)
                 )
             }
 

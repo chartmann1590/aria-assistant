@@ -34,6 +34,8 @@ class SettingsRepositoryImpl @Inject constructor(
         val SELECTED_VOICE = stringPreferencesKey("selected_voice")
         val BOOT_START = booleanPreferencesKey("boot_start")
         val TEMPERATURE_UNIT = stringPreferencesKey("temperature_unit")
+        val PRIVACY_MODE = booleanPreferencesKey("privacy_mode")
+        val SELECTED_MODEL = stringPreferencesKey("selected_model")
     }
 
     override fun getVoiceConfig(): Flow<VoiceConfig> = context.dataStore.data.map { prefs ->
@@ -42,9 +44,11 @@ class SettingsRepositoryImpl @Inject constructor(
             wakeWordSensitivity = prefs[Keys.WAKE_WORD_SENSITIVITY] ?: 0.5f,
             ttsSpeed = prefs[Keys.TTS_SPEED] ?: 1.0f,
             ttsPitch = prefs[Keys.TTS_PITCH] ?: 1.0f,
-            language = "en-US",
+            language = prefs[Keys.LANGUAGE] ?: "en-US",
             selectedVoice = prefs[Keys.SELECTED_VOICE] ?: "en_US-amy-medium",
-            temperatureUnit = prefs[Keys.TEMPERATURE_UNIT] ?: "celsius"
+            temperatureUnit = prefs[Keys.TEMPERATURE_UNIT] ?: "celsius",
+            privacyMode = prefs[Keys.PRIVACY_MODE] ?: false,
+            selectedModel = prefs[Keys.SELECTED_MODEL] ?: "E2B"
         )
     }
 
@@ -57,6 +61,20 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs[Keys.LANGUAGE] = config.language
             prefs[Keys.SELECTED_VOICE] = config.selectedVoice
             prefs[Keys.TEMPERATURE_UNIT] = config.temperatureUnit
+            prefs[Keys.PRIVACY_MODE] = config.privacyMode
+            prefs[Keys.SELECTED_MODEL] = config.selectedModel
+        }
+    }
+
+    override suspend fun updatePrivacyMode(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.PRIVACY_MODE] = enabled
+        }
+    }
+
+    override suspend fun updateSelectedModel(model: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.SELECTED_MODEL] = model
         }
     }
 

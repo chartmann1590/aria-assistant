@@ -62,12 +62,18 @@ class MainViewModel @Inject constructor(
 
     private var isMuted = false
 
-    private val modelUrl = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
-    private val modelFilename = "gemma-4-E2B-it.litertlm"
-
     companion object {
+        private const val MODEL_E2B_URL = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
+        private const val MODEL_E2B_FILENAME = "gemma-4-E2B-it.litertlm"
+        private const val MODEL_E4B_URL = "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm"
+        private const val MODEL_E4B_FILENAME = "gemma-4-E4B-it.litertlm"
         private const val WHISPER_ENCODER_URL = "https://huggingface.co/k2fsa/sherpa-onnx-whisper-tiny.en/resolve/main/encoder.onnx"
         private const val WHISPER_DECODER_URL = "https://huggingface.co/k2fsa/sherpa-onnx-whisper-tiny.en/resolve/main/decoder.onnx"
+    }
+
+    private fun modelUrlFor(model: String): Pair<String, String> {
+        return if (model == "E4B") MODEL_E4B_URL to MODEL_E4B_FILENAME
+        else MODEL_E2B_URL to MODEL_E2B_FILENAME
     }
 
     init {
@@ -134,7 +140,8 @@ class MainViewModel @Inject constructor(
         stateManager.setState(AriaState.INITIALIZING)
         viewModelScope.launch {
             try {
-                val cached = downloadManager.getCachedModelPath(modelFilename)
+                val (url, filename) = modelUrlFor("E2B")
+                val cached = downloadManager.getCachedModelPath(filename)
                 if (cached != null) {
                     AriaLogger.d("MainViewModel", "Cached model found at $cached, initializing engine")
                     stateManager.setState(AriaState.WAKING_UP)
@@ -142,7 +149,7 @@ class MainViewModel @Inject constructor(
                 } else {
                     AriaLogger.d("MainViewModel", "No cached model, starting download")
                     stateManager.setState(AriaState.DOWNLOADING)
-                    downloadManager.downloadModel(modelUrl, modelFilename)
+                    downloadManager.downloadModel(url, filename)
                 }
             } catch (e: Exception) {
                 AriaLogger.e("MainViewModel", "Cold boot failed: ${e.message}", e)

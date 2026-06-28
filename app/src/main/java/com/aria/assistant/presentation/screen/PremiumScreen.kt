@@ -45,10 +45,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aria.assistant.presentation.component.GlassCard
 import com.aria.assistant.presentation.component.NebulaBackground
+import com.aria.assistant.presentation.ui.theme.AuroraAmber
 import com.aria.assistant.presentation.ui.theme.AuroraMagenta
 import com.aria.assistant.presentation.ui.theme.AuroraTeal
 import com.aria.assistant.presentation.ui.theme.AuroraViolet
@@ -80,6 +82,11 @@ private val features = listOf(
     FeatureRow("Read & reply to notifications", false, true),
     FeatureRow("Camera — take & view photos", false, true),
     FeatureRow("Screen control (read/click/scroll)", false, true),
+    FeatureRow("Call history", false, true),
+    FeatureRow("Answer & reject calls", false, true),
+    FeatureRow("Nearby search & reverse geocode", true, true),
+    FeatureRow("Share to WhatsApp & Telegram", true, true),
+    FeatureRow("Storage info & diagnostics", true, true),
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -133,33 +140,49 @@ fun PremiumScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
             ) {
-                // Aurora hero
+                // Aurora hero — layered radial gradients for depth
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(160.dp)
+                        .height(200.dp)
                         .background(
                             Brush.radialGradient(
-                                colors = listOf(
-                                    AuroraMagenta.copy(alpha = 0.35f),
-                                    AuroraViolet.copy(alpha = 0.25f),
-                                    AuroraTeal.copy(alpha = 0.15f),
-                                    Color.Transparent
+                                colorStops = arrayOf(
+                                    0.0f to AuroraMagenta.copy(alpha = 0.45f),
+                                    0.4f to AuroraViolet.copy(alpha = 0.30f),
+                                    0.75f to AuroraTeal.copy(alpha = 0.12f),
+                                    1.0f to Color.Transparent
                                 ),
-                                center = Offset.Unspecified,
-                                radius = 600f
+                                radius = 900f
                             )
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        // Crown / star badge
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    Brush.linearGradient(listOf(AuroraAmber, Color(0xFFF97316))),
+                                    RoundedCornerShape(999.dp)
+                                )
+                                .padding(horizontal = 14.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                "✦  PREMIUM",
+                                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp),
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             "Aria Premium",
                             style = MaterialTheme.typography.headlineLarge,
                             color = TextPrimary,
                             fontWeight = FontWeight.Bold
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             "Unlock the full Aria experience",
                             style = MaterialTheme.typography.bodyMedium,
@@ -274,41 +297,47 @@ fun PremiumScreen(
                         }
                     }
 
-                    // Yearly (featured)
+                    // Yearly (featured) — glowing gradient border, deeper surface
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .background(
-                                Brush.linearGradient(listOf(AuroraViolet, AuroraTeal)),
-                                RoundedCornerShape(20.dp)
+                                Brush.linearGradient(
+                                    listOf(AuroraViolet, AuroraMagenta, AuroraTeal)
+                                ),
+                                RoundedCornerShape(22.dp)
                             )
-                            .padding(1.dp)
+                            .padding(1.5.dp)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color(0xFF0A0520), RoundedCornerShape(19.dp))
+                                .background(Color(0xFF07031A), RoundedCornerShape(21.dp))
                                 .padding(20.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                "Save 44%",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Color.White,
-                                fontWeight = FontWeight.SemiBold,
+                            // "Best Value" badge
+                            Box(
                                 modifier = Modifier
                                     .background(
                                         Brush.linearGradient(listOf(AuroraViolet, AuroraMagenta)),
                                         RoundedCornerShape(999.dp)
                                     )
-                                    .padding(horizontal = 10.dp, vertical = 3.dp)
-                            )
-                            Spacer(modifier = Modifier.height(6.dp))
+                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    "SAVE 44%",
+                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.8.sp),
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text("Yearly", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
                             Spacer(modifier = Modifier.height(6.dp))
                             Text("$19.99", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
                             Text("/year", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                            Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
                             Button(
                                 onClick = { activity?.let { viewModel.subscribe("aria_premium_yearly", it) } },
                                 modifier = Modifier
