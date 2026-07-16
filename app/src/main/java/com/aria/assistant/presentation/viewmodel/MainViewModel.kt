@@ -1,11 +1,14 @@
 ﻿package com.aria.assistant.presentation.viewmodel
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aria.assistant.ads.AdManager
+import com.aria.assistant.billing.FeatureGate
 import com.aria.assistant.data.model.ConversationMessage
 import com.aria.assistant.domain.model.AriaState
 import com.aria.assistant.domain.repository.ConversationRepository
@@ -20,6 +23,7 @@ import com.aria.assistant.service.AriaServiceController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -43,10 +47,23 @@ class MainViewModel @Inject constructor(
     private val voiceModelManager: VoiceModelManager,
     private val ariaTTS: AriaTTS,
     private val serviceController: AriaServiceController,
-    private val stateManager: AriaStateManager
+    private val stateManager: AriaStateManager,
+    private val adManager: AdManager,
+    private val featureGate: FeatureGate
 ) : ViewModel() {
 
     val ariaState: StateFlow<AriaState> = stateManager.state
+
+    val isPremium: StateFlow<Boolean> = featureGate.isPremium
+    val showInterstitialEvents: SharedFlow<Unit> = adManager.showInterstitialEvents
+
+    fun recordAdInteraction() {
+        adManager.recordInteraction()
+    }
+
+    fun showInterstitial(activity: Activity) {
+        adManager.showInterstitial(activity)
+    }
 
     private val _messages = MutableStateFlow<List<ConversationMessage>>(emptyList())
     val messages: StateFlow<List<ConversationMessage>> = _messages.asStateFlow()
@@ -56,6 +73,7 @@ class MainViewModel @Inject constructor(
 
     private val _streamingText = MutableStateFlow("")
     val streamingText: StateFlow<String> = _streamingText.asStateFlow()
+    val verificationActivity: StateFlow<String?> = intentRouter.verificationActivity
 
     private val _downloadInfo = MutableStateFlow(DownloadInfo())
     val downloadInfo: StateFlow<DownloadInfo> = _downloadInfo.asStateFlow()
@@ -235,6 +253,7 @@ class MainViewModel @Inject constructor(
     }
 
     fun sendMessage(text: String) {
+        recordAdInteraction()
         val state = stateManager.state.value
         if (state != AriaState.IDLE && state != AriaState.LISTENING && state != AriaState.MUTED) {
             AriaLogger.d("MainViewModel", "Ignoring sendMessage in state $state")
@@ -283,6 +302,7 @@ class MainViewModel @Inject constructor(
                 AriaLogger.d("MainViewModel", "Cannot listen — engine not ready (state=$current)")
             }
             else -> {
+                recordAdInteraction()
                 viewModelScope.launch {
                     val hasMic = ContextCompat.checkSelfPermission(
                         context, Manifest.permission.RECORD_AUDIO

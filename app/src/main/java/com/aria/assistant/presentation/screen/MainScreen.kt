@@ -1,6 +1,7 @@
 package com.aria.assistant.presentation.screen
 
 import android.Manifest
+import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -39,8 +40,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import com.aria.assistant.translation.TranslatedText as Text
+import com.aria.assistant.translation.translatedUiText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,6 +56,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,6 +64,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aria.assistant.domain.model.AriaState
 import com.aria.assistant.presentation.component.AriaOrb
+import com.aria.assistant.presentation.component.BannerAdView
 import com.aria.assistant.presentation.component.ConversationBubble
 import com.aria.assistant.presentation.component.NebulaBackground
 import com.aria.assistant.presentation.ui.theme.AuroraAmber
@@ -83,6 +88,15 @@ fun MainScreen(
     val messages by viewModel.recentMessages.collectAsStateWithLifecycle()
     val downloadInfo by viewModel.downloadInfo.collectAsStateWithLifecycle()
     val streamingText by viewModel.streamingText.collectAsStateWithLifecycle()
+    val verificationActivity by viewModel.verificationActivity.collectAsStateWithLifecycle()
+    val isPremium by viewModel.isPremium.collectAsStateWithLifecycle()
+    val activity = LocalContext.current as? Activity
+
+    LaunchedEffect(Unit) {
+        viewModel.showInterstitialEvents.collect {
+            activity?.let { viewModel.showInterstitial(it) }
+        }
+    }
     var textInput by remember { mutableStateOf("") }
 
     val micPermissionLauncher = rememberLauncherForActivityResult(
@@ -138,7 +152,7 @@ fun MainScreen(
                     GlassIconButton(onClick = onNavigateToHistory) {
                         Icon(
                             Icons.Default.History,
-                            contentDescription = "History",
+                            contentDescription = translatedUiText("History"),
                             tint = TextSecondary,
                             modifier = Modifier.size(19.dp)
                         )
@@ -146,7 +160,7 @@ fun MainScreen(
                     GlassIconButton(onClick = onNavigateToPremium) {
                         Icon(
                             Icons.Default.Star,
-                            contentDescription = "Premium",
+                            contentDescription = translatedUiText("Premium"),
                             tint = AuroraAmber,
                             modifier = Modifier.size(19.dp)
                         )
@@ -154,7 +168,7 @@ fun MainScreen(
                     GlassIconButton(onClick = onNavigateToSettings) {
                         Icon(
                             Icons.Outlined.Settings,
-                            contentDescription = "Settings",
+                            contentDescription = translatedUiText("Settings"),
                             tint = TextSecondary,
                             modifier = Modifier.size(19.dp)
                         )
@@ -181,7 +195,7 @@ fun MainScreen(
                     }
                     AriaState.IDLE         -> "Tap mic or type below"
                     AriaState.LISTENING    -> "Listening..."
-                    AriaState.PROCESSING   -> "Thinking..."
+                    AriaState.PROCESSING   -> verificationActivity ?: "Thinking..."
                     AriaState.SPEAKING     -> "Speaking..."
                     AriaState.MUTED        -> "Muted"
                     AriaState.INITIALIZING -> "Starting up..."
@@ -243,6 +257,13 @@ fun MainScreen(
                 items(messages.take(10)) { message ->
                     ConversationBubble(message = message)
                 }
+            }
+
+            if (!isPremium) {
+                BannerAdView(
+                    modifier = Modifier
+                        .padding(horizontal = 14.dp, vertical = 4.dp)
+                )
             }
 
             // ── Floating input bar ───────────────────────────────────────────
@@ -308,7 +329,7 @@ fun MainScreen(
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.Send,
-                            contentDescription = "Send",
+                            contentDescription = translatedUiText("Send"),
                             tint = if (canSend) AuroraAmber else TextTertiary,
                             modifier = Modifier.size(18.dp)
                         )
@@ -351,11 +372,11 @@ fun MainScreen(
                                     isActive -> Icons.Default.Stop
                                     else -> Icons.Default.Mic
                                 },
-                                contentDescription = when {
+                                contentDescription = translatedUiText(when {
                                     ariaState == AriaState.MUTED -> "Unmute"
                                     isActive -> "Stop"
                                     else -> "Listen"
-                                },
+                                }),
                                 tint = Color.White,
                                 modifier = Modifier.size(21.dp)
                             )
