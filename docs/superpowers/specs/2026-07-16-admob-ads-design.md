@@ -62,9 +62,12 @@ credentials (`app/build.gradle.kts` `readProp()`).
   collects it and calls `adManager.showInterstitial(activity)` using
   `LocalContext.current` cast to `Activity`.
 
-### 6. `AriaApplication`
-- Call `MobileAds.initialize(this)` in `onCreate()` alongside the existing
-  notification-channel setup.
+### 6. AdManager initialization
+- `AdManager` is a Hilt `@Singleton`, first constructed when `MainViewModel` injects
+  it. Its `init {}` block calls `MobileAds.initialize()` and pre-loads the first
+  interstitial, mirroring how `BillingManager` already does its setup work in an
+  `init {}` block. No `AriaApplication` change is needed — ads are only ever shown
+  on `MainScreen`, so eager initialization at app startup isn't required.
 
 ## CI / Secrets
 
