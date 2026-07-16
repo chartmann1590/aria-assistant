@@ -30,7 +30,7 @@ class AdManager @Inject constructor(
     private val billingManager: BillingManager
 ) {
     private val cadence = InterstitialCadence()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var interstitialAd: InterstitialAd? = null
     private var pendingInterstitialRequest = false
 
