@@ -1,0 +1,155 @@
+name: Publish to Google Play
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_play_publish:
+        description: 'Type "publish" to confirm a production Play release'
+        required: true
+        type: string
+      release_notes:
+        description: "Optional release notes"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Build and publish production release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Require explicit publish confirmation
+        if: ${{ inputs.confirm_play_publish != 'publish' }}
+        run: |
+          echo 'Publishing was not confirmed. Enter exactly: publish'
+          exit 1
+
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Verify required publishing secrets
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_BANNER_AD_UNIT_ID: ${{ secrets.ADMOB_BANNER_AD_UNIT_ID }}
+          ADMOB_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_INTERSTITIAL_AD_UNIT_ID }}
+          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          GH_REPO_OWNER: ${{ secrets.GH_REPO_OWNER }}
+          GH_REPO_NAME: ${{ secrets.GH_REPO_NAME }}
+        run: |
+          missing=0
+          for name in GOOGLE_PLAY_SERVICE_ACCOUNT_JSON GOOGLE_SERVICES_JSON RELEASE_KEYSTORE RELEASE_KEYSTORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD ADMOB_APP_ID ADMOB_BANNER_AD_UNIT_ID ADMOB_INTERSTITIAL_AD_UNIT_ID GH_API_TOKEN GH_REPO_OWNER GH_REPO_NAME; do
+            if [ -z "${!name}" ]; then
+              echo "Required secret is missing: $name"
+              missing=1
+            fi
+          done
+          exit "$missing"
+
+      - name: Materialize Firebase and release signing files
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_BANNER_AD_UNIT_ID: ${{ secrets.ADMOB_BANNER_AD_UNIT_ID }}
+          ADMOB_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_INTERSTITIAL_AD_UNIT_ID }}
+          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          GH_REPO_OWNER: ${{ secrets.GH_REPO_OWNER }}
+          GH_REPO_NAME: ${{ secrets.GH_REPO_NAME }}
+        run: |
+          printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+          printf '%s' "$RELEASE_KEYSTORE" | base64 --decode > app/release-upload.jks
+          {
+            echo 'storeFile=app/release-upload.jks'
+            printf 'storePassword=%s\n' "$RELEASE_KEYSTORE_PASSWORD"
+            printf 'keyAlias=%s\n' "$RELEASE_KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$RELEASE_KEY_PASSWORD"
+          } > keystore.properties
+          {
+            printf 'admob.app.id=%s\n' "$ADMOB_APP_ID"
+            printf 'admob.banner.id=%s\n' "$ADMOB_BANNER_AD_UNIT_ID"
+            printf 'admob.interstitial.id=%s\n' "$ADMOB_INTERSTITIAL_AD_UNIT_ID"
+            printf 'github.api.token=%s\n' "$GH_API_TOKEN"
+            printf 'github.repo.owner=%s\n' "$GH_REPO_OWNER"
+            printf 'github.repo.name=%s\n' "$GH_REPO_NAME"
+          } > local.properties
+
+      - name: Compute release version
+        shell: bash
+        run: |
+          version_code="$(date -u +'%y%j%H%M')"
+          version_name="1.0.0.$(date -u +'%Y%m%d.%H%M')"
+          echo "ANDROID_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+          echo "ANDROID_VERSION_NAME=$version_name" >> "$GITHUB_ENV"
+
+      - name: Run unit tests
+        run: ./gradlew test
+
+      - name: Run lint
+        run: ./gradlew lint --no-parallel
+
+      - name: Build signed release bundle
+        run: ./gradlew bundleRelease
+
+      - name: Generate Play release notes
+        env:
+          RELEASE_NOTES: ${{ inputs.release_notes }}
+        shell: bash
+        run: |
+          mkdir -p distribution/whatsnew
+          notes_file='distribution/whatsnew/whatsnew-en-US'
+          if [ -n "$RELEASE_NOTES" ]; then
+            printf '%s\n' "$RELEASE_NOTES" > "$notes_file"
+          else
+            previous_tag="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)"
+            if [ -n "$previous_tag" ]; then
+              git log --pretty='- %s' "$previous_tag"..HEAD > "$notes_file"
+            elif [ -f listing/whats_new.txt ]; then
+              cp listing/whats_new.txt "$notes_file"
+            else
+              git log --pretty='- %s' -20 > "$notes_file"
+            fi
+            if [ ! -s "$notes_file" ]; then
+              printf '%s\n' 'Bug fixes and performance improvements.' > "$notes_file"
+            fi
+          fi
+
+      - name: Upload release bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aria-production-${{ env.ANDROID_VERSION_CODE }}
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Publish production release to Google Play
+        uses: r0adkll/upload-google-play@v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.aria.assistant
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          track: production
+          status: completed
+          whatsNewDirectory: distribution/whatsnew
+          mappingFile: app/build/outputs/mapping/release/mapping.txt
