@@ -4,6 +4,8 @@
 build/
 app/build/
 local.properties
+keystore.properties
+*.jks
 *.iml
 .idea/
 .DS_Store
