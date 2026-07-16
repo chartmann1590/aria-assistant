@@ -12,7 +12,7 @@
 [![Compose](https://img.shields.io/badge/Jetpack%20Compose-2025.05-7C5CFF?style=flat-square)](https://developer.android.com/jetpack/compose)
 [![API](https://img.shields.io/badge/min%20SDK-26-F59E0B?style=flat-square)](https://developer.android.com/studio/releases/platforms)
 
-**No cloud. No tracking. No subscription required to use the core assistant.**
+**Private on-device AI. Optional web verification. No subscription required to use the core assistant.**
 
 [Website](https://chartmann1590.github.io/aria-assistant) · [Privacy Policy](https://chartmann1590.github.io/aria-assistant/privacy.html) · [Download APK](https://github.com/chartmann1590/aria-assistant/releases) · [Report a bug](https://github.com/chartmann1590/aria-assistant/issues)
 
@@ -42,6 +42,8 @@ Under the hood it combines three on-device models:
 - 🎙️ "Hey Aria" wake word (always listening, fully local)
 - ⏰ Timers, alarms, and reminders
 - 🌐 Web search & Wikipedia (when you need current info)
+- ✅ Multi-source web verification with an expandable research trace
+- 🌍 On-device menu translation for every language supported by ML Kit
 - 📱 App launch, media control, battery/time queries
 - 📩 Read your SMS inbox and dismiss notifications
 - 🗺️ Location & navigation queries
@@ -65,12 +67,15 @@ Everything above, plus:
 
 > **Your voice never leaves your phone.**
 
-All audio processing, speech recognition, LLM inference, and text-to-speech happen entirely on your device. Aria contains no analytics SDKs, no advertising SDKs, and no crash-reporting SDKs.
+All audio processing, speech recognition, LLM inference, text-to-speech, and downloaded-language translation happen entirely on your device. Free-tier users see banner and interstitial ads served by Google AdMob; Premium subscribers see no ads. Firebase Analytics, Crashlytics, and Performance Monitoring collect app-usage and technical diagnostics; they do not receive voice audio or conversation content.
 
 The only network requests Aria makes:
 1. Downloading the AI model on first launch (one-time, ~2.5 GB)
-2. Optional web search queries (when you explicitly ask)
-3. Google Play Billing to verify subscription status (token only, no personal data)
+2. Web-verification queries, according to the mode selected in Settings
+3. ML Kit translation-model downloads; translation is offline after download
+4. Firebase analytics, crash diagnostics, and performance telemetry
+5. Optional GitHub issue reports submitted from Settings, including only the details and attachments you choose
+6. Google Play Billing to verify subscription status (token only, no personal data)
 
 See the full [Privacy Policy](https://chartmann1590.github.io/aria-assistant/privacy.html) for a per-permission breakdown.
 
@@ -106,6 +111,25 @@ cd aria-assistant
 ```
 
 The debug APK will be at `app/build/outputs/apk/debug/app-debug.apk`.
+
+### Firebase configuration
+
+The app uses Firebase Analytics, Crashlytics, and Performance Monitoring. Register both Android application IDs in one Firebase project and place their CLI-generated configuration files at:
+
+- `app/src/release/google-services.json` for `com.aria.assistant`
+- `app/src/debug/google-services.json` for `com.aria.assistant.debug`
+
+The committed `.firebaserc` records the Firebase project alias. The JSON files contain Firebase project identifiers, not private credentials. With an authenticated Firebase CLI, configuration can be refreshed using `firebase apps:list` and `firebase apps:sdkconfig ANDROID <app-id> --out <path>`.
+
+Crashlytics mapping uploads and Performance Monitoring bytecode/network instrumentation are enabled by their Gradle plugins. Analytics and automatic technical telemetry start when Firebase initializes.
+
+### In-app GitHub issue reporting
+
+Settings → Support & Feedback can create GitHub issues, attach a screenshot and diagnostics with user consent, track reports, and reply to issue threads. Configure `github.api.token`, `github.repo.owner`, and `github.repo.name` in untracked `local.properties`; CI supplies the same values through repository secrets.
+
+### Google AdMob configuration
+
+Ads are served via Google AdMob. Configure `admob.app.id`, `admob.banner.id`, and `admob.interstitial.id` in untracked `local.properties`; CI supplies the same values through repository secrets (`ADMOB_APP_ID`, `ADMOB_BANNER_ID`, `ADMOB_INTERSTITIAL_ID`). Without these set, the app falls back to Google's public test ad IDs.
 
 ### Install to a connected device
 
@@ -154,6 +178,8 @@ app/src/main/java/com/aria/assistant/
 │   ├── screen/     # MainScreen, Settings, Onboarding, History, Premium, Permissions
 │   ├── ui/theme/   # Nebula color tokens, Sora + DM Sans typography, Material3 theme
 │   └── viewmodel/  # MainViewModel, SettingsViewModel, OnboardingViewModel, …
+├── translation/    # ML Kit model download, offline UI translation, translated Compose text
+├── web/            # Search, safe page extraction, verification policy and metadata
 ├── service/        # AriaForegroundService, AriaBootReceiver, AriaServiceController
 └── skill/          # Individual capability skills (call, SMS, camera, calendar, …)
 ```
