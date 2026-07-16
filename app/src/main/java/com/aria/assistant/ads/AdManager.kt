@@ -26,6 +26,7 @@ class AdManager @Inject constructor(
 ) {
     private val cadence = InterstitialCadence()
     private var interstitialAd: InterstitialAd? = null
+    private var pendingInterstitialRequest = false
 
     private val _showInterstitialEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val showInterstitialEvents: SharedFlow<Unit> = _showInterstitialEvents.asSharedFlow()
@@ -38,8 +39,12 @@ class AdManager @Inject constructor(
     fun recordInteraction() {
         if (billingManager.isPremium.value) return
         val due = cadence.recordInteraction()
-        if (due && interstitialAd != null) {
-            _showInterstitialEvents.tryEmit(Unit)
+        if (due) {
+            if (interstitialAd != null) {
+                _showInterstitialEvents.tryEmit(Unit)
+            } else {
+                pendingInterstitialRequest = true
+            }
         }
     }
 
@@ -69,6 +74,10 @@ class AdManager @Inject constructor(
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
                     interstitialAd = ad
+                    if (pendingInterstitialRequest) {
+                        pendingInterstitialRequest = false
+                        _showInterstitialEvents.tryEmit(Unit)
+                    }
                 }
 
                 override fun onAdFailedToLoad(error: LoadAdError) {
