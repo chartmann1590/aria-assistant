@@ -13,9 +13,14 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,6 +30,7 @@ class AdManager @Inject constructor(
     private val billingManager: BillingManager
 ) {
     private val cadence = InterstitialCadence()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var interstitialAd: InterstitialAd? = null
     private var pendingInterstitialRequest = false
 
@@ -83,8 +89,16 @@ class AdManager @Inject constructor(
                 override fun onAdFailedToLoad(error: LoadAdError) {
                     AriaLogger.d("AdManager", "Interstitial failed to load: ${error.message}")
                     interstitialAd = null
+                    scope.launch {
+                        delay(RETRY_DELAY_MS)
+                        loadInterstitial()
+                    }
                 }
             }
         )
+    }
+
+    private companion object {
+        const val RETRY_DELAY_MS = 30_000L
     }
 }
