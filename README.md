@@ -129,7 +129,7 @@ Settings → Support & Feedback can create GitHub issues, attach a screenshot an
 
 ### Google AdMob configuration
 
-Ads are served via Google AdMob. Configure `admob.app.id`, `admob.banner.id`, and `admob.interstitial.id` in untracked `local.properties`; CI supplies the same values through repository secrets (`ADMOB_APP_ID`, `ADMOB_BANNER_ID`, `ADMOB_INTERSTITIAL_ID`). Without these set, the app falls back to Google's public test ad IDs.
+Ads are served via Google AdMob. Configure `admob.app.id`, `admob.banner.id`, and `admob.interstitial.id` in untracked `local.properties`; CI supplies the same values through repository secrets (`ADMOB_APP_ID`, `ADMOB_BANNER_AD_UNIT_ID`, `ADMOB_INTERSTITIAL_AD_UNIT_ID`). Without these set, the app falls back to Google's public test ad IDs.
 
 ### Install to a connected device
 
