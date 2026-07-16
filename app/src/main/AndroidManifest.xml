@@ -93,6 +93,10 @@
             </intent-filter>
         </activity>
 
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${adMobAppId}" />
+
         <service
             android:name=".service.AriaForegroundService"
             android:foregroundServiceType="microphone"
