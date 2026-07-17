@@ -112,13 +112,11 @@ class AriaForegroundService : Service() {
                 AriaLogger.d("AriaForegroundService", "Initializing engines (whisper + piper)...")
 
                 val whisperDir = File(filesDir, "models/whisper").absolutePath
-                val whisperEncoder = File(whisperDir, "encoder.onnx")
-                val whisperDecoder = File(whisperDir, "decoder.onnx")
-                whisperAvailable = whisperEncoder.exists() && whisperDecoder.exists()
-                if (whisperAvailable) {
+                if (WhisperSTT.hasCompleteModel(whisperDir)) {
                     AriaLogger.d("AriaForegroundService", "Whisper models found, initializing")
-                    whisperSTT.initialize(whisperDir)
+                    whisperAvailable = whisperSTT.initialize(whisperDir)
                 } else {
+                    whisperAvailable = false
                     AriaLogger.d("AriaForegroundService", "Whisper not available, will use Android STT fallback")
                 }
 

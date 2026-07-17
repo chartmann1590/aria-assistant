@@ -35,10 +35,8 @@ abstract class EngineModule {
 
         @Provides
         @Singleton
-        fun provideWhisperSTT(
-            @ApplicationContext context: Context
-        ): WhisperSTT {
-            return WhisperSTT(context)
+        fun provideWhisperSTT(): WhisperSTT {
+            return WhisperSTT()
         }
 
         @Provides

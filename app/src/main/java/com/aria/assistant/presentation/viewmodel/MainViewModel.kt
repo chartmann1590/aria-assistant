@@ -21,6 +21,7 @@ import com.aria.assistant.engine.IntentRouter
 import com.aria.assistant.engine.LlmEngine
 import com.aria.assistant.engine.ModelDownloadManager
 import com.aria.assistant.engine.VoiceModelManager
+import com.aria.assistant.engine.WhisperSTT
 import com.aria.assistant.service.AriaServiceController
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -96,8 +97,9 @@ class MainViewModel @Inject constructor(
         private const val MODEL_E2B_FILENAME = "gemma-4-E2B-it.litertlm"
         private const val MODEL_E4B_URL = "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm"
         private const val MODEL_E4B_FILENAME = "gemma-4-E4B-it.litertlm"
-        private const val WHISPER_ENCODER_URL = "https://huggingface.co/k2fsa/sherpa-onnx-whisper-tiny.en/resolve/main/encoder.onnx"
-        private const val WHISPER_DECODER_URL = "https://huggingface.co/k2fsa/sherpa-onnx-whisper-tiny.en/resolve/main/decoder.onnx"
+        private const val WHISPER_ENCODER_URL = "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny.en/resolve/main/tiny.en-encoder.int8.onnx"
+        private const val WHISPER_DECODER_URL = "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny.en/resolve/main/tiny.en-decoder.int8.onnx"
+        private const val WHISPER_TOKENS_URL = "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny.en/resolve/main/tiny.en-tokens.txt"
     }
 
     private fun modelUrlFor(model: String): Pair<String, String> {
@@ -189,9 +191,11 @@ class MainViewModel @Inject constructor(
 
     private fun startWhisperDownload() {
         viewModelScope.launch {
-            val encoderFile = File(context.filesDir, "models/whisper/encoder.onnx")
-            val decoderFile = File(context.filesDir, "models/whisper/decoder.onnx")
-            if (encoderFile.exists() && decoderFile.exists()) {
+            val modelDir = File(context.filesDir, "models/whisper")
+            val encoderFile = File(modelDir, WhisperSTT.ENCODER_FILENAME)
+            val decoderFile = File(modelDir, WhisperSTT.DECODER_FILENAME)
+            val tokensFile = File(modelDir, WhisperSTT.TOKENS_FILENAME)
+            if (WhisperSTT.hasCompleteModel(modelDir.absolutePath)) {
                 AriaLogger.d("MainViewModel", "Whisper models already cached")
                 downloadDefaultVoice()
                 return@launch
@@ -207,7 +211,10 @@ class MainViewModel @Inject constructor(
                 _downloadInfo.value = info2.copy(whisperProgress = 0.5f, totalProgress = 0.7f)
                 downloadManager.downloadFile(WHISPER_DECODER_URL, decoderFile)
                 val info3 = _downloadInfo.value
-                _downloadInfo.value = info3.copy(whisperProgress = 1f, totalProgress = 0.8f)
+                _downloadInfo.value = info3.copy(whisperProgress = 0.9f, totalProgress = 0.78f)
+                downloadManager.downloadFile(WHISPER_TOKENS_URL, tokensFile)
+                val info4 = _downloadInfo.value
+                _downloadInfo.value = info4.copy(whisperProgress = 1f, totalProgress = 0.8f)
                 AriaLogger.d("MainViewModel", "Whisper models downloaded")
             } catch (e: Exception) {
                 AriaLogger.e("MainViewModel", "Whisper download failed (non-fatal): ${e.message}")

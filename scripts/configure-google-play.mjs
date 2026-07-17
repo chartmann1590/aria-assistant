@@ -4,6 +4,7 @@ import { extname, join } from "node:path";
 const token = process.env.GOOGLE_OAUTH_ACCESS_TOKEN;
 const packageName = process.env.PLAY_PACKAGE_NAME || "com.aria.assistant";
 const apiRoot = "https://androidpublisher.googleapis.com/androidpublisher/v3";
+const promoVideo = "https://youtu.be/_wgi6OSL80g";
 
 if (!token) throw new Error("GOOGLE_OAUTH_ACCESS_TOKEN is required");
 
@@ -116,7 +117,7 @@ async function configureListing() {
   const base = `${apiRoot}/applications/${packageName}/edits/${edit.id}/listings/en-US`;
   await request(base, {
     method: "PUT",
-    body: JSON.stringify({ language: "en-US", title, shortDescription, fullDescription }),
+    body: JSON.stringify({ language: "en-US", title, shortDescription, fullDescription, video: promoVideo }),
   });
 
   const imageSets = [

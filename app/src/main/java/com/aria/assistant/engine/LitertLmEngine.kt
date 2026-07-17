@@ -1,9 +1,9 @@
 package com.aria.assistant.engine
 
+import android.app.ActivityManager
 import android.content.Context
 import com.aria.assistant.agent.ChatMessage
 import com.google.ai.edge.litertlm.Backend
-import com.google.ai.edge.litertlm.Conversation
 import com.google.ai.edge.litertlm.Engine
 import com.google.ai.edge.litertlm.EngineConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,7 +25,6 @@ class LitertLmEngine @Inject constructor(
 ) : LlmEngine {
 
     private var engine: Engine? = null
-    private var conversation: Conversation? = null
     private var currentModelPath: String? = null
     private val initializationMutex = Mutex()
     private val inferenceMutex = Mutex()
@@ -49,37 +48,16 @@ class LitertLmEngine @Inject constructor(
             _lastError.value = err
             return@withContext
         }
+        val memoryInfo = ActivityManager.MemoryInfo()
+        context.getSystemService(ActivityManager::class.java)?.getMemoryInfo(memoryInfo)
+        if (memoryInfo.lowMemory) {
+            val err = "Not enough free memory to load the on-device model. Close other apps and try again."
+            AriaLogger.e("LitertLmEngine", err)
+            _lastError.value = err
+            return@withContext
+        }
         try {
-            // Try NPU first (Tensor G3 Edge TPU), then GPU (OpenCL), then CPU
-            try {
-                AriaLogger.d("LitertLmEngine", "Trying NPU backend...")
-                val npuConfig = EngineConfig(modelPath, Backend.NPU())
-                val eng = Engine(npuConfig)
-                eng.initialize()
-                conversation = eng.createConversation()
-                engine = eng
-                AriaLogger.d("LitertLmEngine", "Engine ready (NPU)")
-            } catch (e1: Exception) {
-                AriaLogger.d("LitertLmEngine", "NPU failed: ${e1.message}")
-                try {
-                    AriaLogger.d("LitertLmEngine", "Trying GPU backend...")
-                    val gpuConfig = EngineConfig(modelPath, Backend.GPU())
-                    val eng = Engine(gpuConfig)
-                    eng.initialize()
-                    conversation = eng.createConversation()
-                    engine = eng
-                    AriaLogger.d("LitertLmEngine", "Engine ready (GPU)")
-                } catch (e2: Exception) {
-                    AriaLogger.d("LitertLmEngine", "GPU failed: ${e2.message}")
-                    AriaLogger.d("LitertLmEngine", "Trying CPU backend...")
-                    val cpuConfig = EngineConfig(modelPath, Backend.CPU())
-                    val eng = Engine(cpuConfig)
-                    eng.initialize()
-                    conversation = eng.createConversation()
-                    engine = eng
-                    AriaLogger.d("LitertLmEngine", "Engine ready (CPU)")
-                }
-            }
+            engine = initializeWithFallback(modelPath)
             _isReady.value = true
             currentModelPath = modelPath
             _lastError.value = null
@@ -89,6 +67,32 @@ class LitertLmEngine @Inject constructor(
             _lastError.value = err
         }
         }
+    }
+
+    private fun initializeWithFallback(modelPath: String): Engine {
+        val attempts = listOf(
+            "GPU" to { EngineConfig(modelPath, Backend.GPU()) },
+            "CPU" to { EngineConfig(modelPath, Backend.CPU()) },
+        )
+        var lastFailure: Exception? = null
+        for ((name, createConfig) in attempts) {
+            AriaLogger.d("LitertLmEngine", "Trying $name backend...")
+            var candidate: Engine? = null
+            try {
+                candidate = Engine(createConfig())
+                candidate.initialize()
+                AriaLogger.d("LitertLmEngine", "Engine ready ($name)")
+                return candidate
+            } catch (failure: Exception) {
+                lastFailure = failure
+                AriaLogger.d("LitertLmEngine", "$name failed: ${failure.message}")
+                if (candidate?.isInitialized() == true) {
+                    runCatching { candidate.close() }
+                        .onFailure { AriaLogger.e("LitertLmEngine", "Could not release failed $name backend", it) }
+                }
+            }
+        }
+        throw IllegalStateException("No LiteRT backend could load the model", lastFailure)
     }
 
     override fun chat(messages: List<ChatMessage>): Flow<String> = flow {
@@ -106,26 +110,27 @@ class LitertLmEngine @Inject constructor(
             inferenceMutex.withLock {
                 // AgentRunner supplies the complete bounded history. A fresh native conversation
                 // prevents previous turns from being appended a second time by LiteRT-LM.
-                val conv = activeEngine.createConversation()
-                val sb = StringBuilder()
-                for (msg in messages) {
-                    val role = when (msg.role) {
-                        ChatMessage.Role.SYSTEM -> "system"
-                        ChatMessage.Role.USER -> "user"
-                        ChatMessage.Role.MODEL -> "model"
-                        ChatMessage.Role.TOOL -> "user"
+                activeEngine.createConversation().use { conv ->
+                    val sb = StringBuilder()
+                    for (msg in messages) {
+                        val role = when (msg.role) {
+                            ChatMessage.Role.SYSTEM -> "system"
+                            ChatMessage.Role.USER -> "user"
+                            ChatMessage.Role.MODEL -> "model"
+                            ChatMessage.Role.TOOL -> "user"
+                        }
+                        val content = if (msg.role == ChatMessage.Role.TOOL) {
+                            "<tool_result>${msg.content}</tool_result>"
+                        } else {
+                            msg.content
+                        }
+                        sb.append("<start_of_turn>$role\n$content<end_of_turn>\n")
                     }
-                    val content = if (msg.role == ChatMessage.Role.TOOL) {
-                        "<tool_result>${msg.content}</tool_result>"
-                    } else {
-                        msg.content
-                    }
-                    sb.append("<start_of_turn>$role\n$content<end_of_turn>\n")
-                }
-                sb.append("<start_of_turn>model\n")
+                    sb.append("<start_of_turn>model\n")
 
-                val resultFlow = conv.sendMessageAsync(sb.toString())
-                resultFlow.collect { token -> emit(token.toString()) }
+                    val resultFlow = conv.sendMessageAsync(sb.toString())
+                    resultFlow.collect { token -> emit(token.toString()) }
+                }
             }
         } catch (e: Exception) {
             AriaLogger.e("LitertLmEngine", "Inference failed: ${e.message}", e)

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -748,6 +749,9 @@ private fun ReportDialog(
                 .heightIn(max = 600.dp)
                 .background(NebulaBase, RoundedCornerShape(16.dp))
                 .border(0.5.dp, GlassStroke, RoundedCornerShape(16.dp))
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .imePadding()
                 .padding(20.dp)
         ) {
             Text(
@@ -955,6 +959,9 @@ private fun IssueDetailDialog(
                 .heightIn(max = 700.dp)
                 .background(NebulaBase, RoundedCornerShape(16.dp))
                 .border(0.5.dp, GlassStroke, RoundedCornerShape(16.dp))
+                .windowInsetsPadding(WindowInsets.statusBars)
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .imePadding()
                 .padding(20.dp)
         ) {
             when {
