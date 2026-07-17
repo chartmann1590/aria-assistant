@@ -138,11 +138,14 @@ async function configureListing() {
     method: "POST",
     body: "{}",
   });
-  await request(`${apiRoot}/applications/${packageName}/edits/${edit.id}:commit?changesNotSentForReview=true&changesInReviewBehavior=ERROR_IF_IN_REVIEW`, {
+  // Some Play accounts send listing edits for review automatically and reject
+  // changesNotSentForReview. Release visibility is controlled separately by the
+  // draft track status in the publishing workflow.
+  await request(`${apiRoot}/applications/${packageName}/edits/${edit.id}:commit`, {
     method: "POST",
     body: "{}",
   });
-  console.log("Committed English listing and artwork without requesting public rollout");
+  console.log("Committed English listing and artwork; no app release was rolled out");
 }
 
 await ensureSubscription({
