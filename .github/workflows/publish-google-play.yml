@@ -149,7 +149,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.aria.assistant
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
-          track: production
+          tracks: production
           status: draft
           whatsNewDirectory: distribution/whatsnew
           mappingFile: app/build/outputs/mapping/release/mapping.txt
