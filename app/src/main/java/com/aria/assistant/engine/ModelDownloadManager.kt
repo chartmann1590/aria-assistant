@@ -5,6 +5,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -30,6 +32,7 @@ class ModelDownloadManager @Inject constructor(
 
     private val _state = MutableStateFlow<DownloadState>(DownloadState.Idle)
     val state: StateFlow<DownloadState> = _state
+    private val fileDownloadMutex = Mutex()
 
     suspend fun downloadModel(url: String, filename: String) = withContext(Dispatchers.IO) {
         val outputFile = File(context.filesDir, "models/$filename")
@@ -101,30 +104,38 @@ class ModelDownloadManager @Inject constructor(
     }
 
     suspend fun downloadFile(url: String, outputFile: File) = withContext(Dispatchers.IO) {
-        if (outputFile.exists() && outputFile.length() > 0) return@withContext
-        outputFile.parentFile?.mkdirs()
-        val partialFile = File(outputFile.parentFile, "${outputFile.name}.part")
-        partialFile.delete()
+        fileDownloadMutex.withLock {
+            if (outputFile.exists() && outputFile.length() > 0) return@withLock
+            outputFile.parentFile?.mkdirs()
+            val partialFile = File(outputFile.parentFile, "${outputFile.name}.part")
+            partialFile.delete()
 
-        val connection = URL(url).openConnection() as HttpURLConnection
-        connection.connectTimeout = 15000
-        connection.readTimeout = 30000
-        connection.instanceFollowRedirects = true
+            val connection = URL(url).openConnection() as HttpURLConnection
+            connection.connectTimeout = 15000
+            connection.readTimeout = 30000
+            connection.instanceFollowRedirects = true
 
-        val responseCode = connection.responseCode
-        if (responseCode != HttpURLConnection.HTTP_OK) {
-            throw java.io.FileNotFoundException("HTTP $responseCode for $url")
-        }
+            try {
+                val responseCode = connection.responseCode
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    throw java.io.FileNotFoundException("HTTP $responseCode for $url")
+                }
 
-        connection.inputStream.buffered().use { input ->
-            FileOutputStream(partialFile).use { output ->
-                input.copyTo(output, bufferSize = 8192)
+                connection.inputStream.buffered().use { input ->
+                    FileOutputStream(partialFile).use { output ->
+                        input.copyTo(output, bufferSize = 8192)
+                    }
+                }
+                if (partialFile.length() <= 0 || !partialFile.renameTo(outputFile)) {
+                    throw java.io.IOException("Could not finalize downloaded file")
+                }
+                AriaLogger.d("ModelDownloadManager", "File downloaded: ${outputFile.absolutePath}")
+            } catch (failure: Exception) {
+                partialFile.delete()
+                throw failure
+            } finally {
+                connection.disconnect()
             }
         }
-        if (partialFile.length() <= 0 || !partialFile.renameTo(outputFile)) {
-            partialFile.delete()
-            throw java.io.IOException("Could not finalize downloaded file")
-        }
-        AriaLogger.d("ModelDownloadManager", "File downloaded: ${outputFile.absolutePath}")
     }
 }

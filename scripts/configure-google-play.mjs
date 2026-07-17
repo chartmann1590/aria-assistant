@@ -120,14 +120,23 @@ async function configureListing() {
     body: JSON.stringify({ language: "en-US", title, shortDescription, fullDescription, video: promoVideo }),
   });
 
+  const screenshotFiles = async (directory) => (await readdir(directory))
+    .filter((name) => /\.(png|jpe?g)$/i.test(name)).sort()
+    .map((name) => join(directory, name));
+  const phoneScreenshots = await screenshotFiles("play-store/graphics/phone-screenshots/framed");
+  const sevenInchScreenshots = await screenshotFiles("play-store/graphics/seven-inch-screenshots/framed");
+  const tenInchScreenshots = await screenshotFiles("play-store/graphics/ten-inch-screenshots/framed");
+  if (phoneScreenshots.length < 2) throw new Error("At least two framed phone screenshots are required");
+  if (sevenInchScreenshots.length < 1) throw new Error("At least one 7-inch screenshot is required");
+  if (tenInchScreenshots.length < 1) throw new Error("At least one 10-inch screenshot is required");
+
   const imageSets = [
     ["icon", ["play-store/graphics/icon/aria-play-icon-512.png"]],
     ["featureGraphic", ["play-store/graphics/feature-graphic/aria-feature-graphic-1024x500.png"]],
-    ["phoneScreenshots", (await readdir("play-store/graphics/phone-screenshots/framed"))
-      .filter((name) => /\.(png|jpe?g)$/i.test(name)).sort()
-      .map((name) => join("play-store/graphics/phone-screenshots/framed", name))],
+    ["phoneScreenshots", phoneScreenshots],
+    ["sevenInchScreenshots", sevenInchScreenshots],
+    ["tenInchScreenshots", tenInchScreenshots],
   ];
-  if (imageSets[2][1].length < 2) throw new Error("At least two framed phone screenshots are required");
 
   for (const [type, files] of imageSets) {
     await request(`${base}/${type}`, { method: "DELETE" }, [200, 204]);
