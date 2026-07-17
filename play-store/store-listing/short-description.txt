@@ -1,0 +1,1 @@
+Private on-device voice AI with optional, source-backed web verification.

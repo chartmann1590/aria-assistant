@@ -71,6 +71,18 @@ class AriaForegroundService : Service() {
     override fun onCreate() {
         super.onCreate()
         AriaLogger.d("AriaForegroundService", "Service onCreate")
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            AriaLogger.e(
+                "AriaForegroundService",
+                "Stopping because microphone permission is not granted"
+            )
+            stopSelf()
+            return
+        }
+
         startForeground(NOTIFICATION_ID, buildNotification(AriaState.INITIALIZING))
         initializeEngines()
         observeWakeWordSetting()

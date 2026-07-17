@@ -2,9 +2,11 @@
 
 import android.app.NotificationManager
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
+import android.os.Build
 import android.provider.Settings
 import com.aria.assistant.permission.PermissionManager
 import com.aria.assistant.permission.PhoneCapability
@@ -80,7 +82,12 @@ class SettingsSkill @Inject constructor(
             value.equals("enable", ignoreCase = true) ||
             value.equals("true", ignoreCase = true)
         if (enable) {
-            val panel = Intent(Settings.Panel.ACTION_WIFI).apply {
+            val action = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                Settings.Panel.ACTION_WIFI
+            } else {
+                Settings.ACTION_WIFI_SETTINGS
+            }
+            val panel = Intent(action).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             context.startActivity(panel)
@@ -89,7 +96,6 @@ class SettingsSkill @Inject constructor(
         return SkillResult.Failure("I can't turn Wi-Fi off directly")
     }
 
-    @Suppress("DEPRECATION")
     private fun setBluetooth(value: String): SkillResult<String> {
         val enable = value.equals("on", ignoreCase = true) ||
             value.equals("enable", ignoreCase = true) ||
@@ -98,12 +104,24 @@ class SettingsSkill @Inject constructor(
         if (perm is PermissionResult.Denied) {
             return SkillResult.NeedsPermission(PhoneCapability.BLUETOOTH)
         }
-        val bt = BluetoothAdapter.getDefaultAdapter()
-        if (bt == null) {
+        val bluetoothManager = context.getSystemService(BluetoothManager::class.java)
+        if (bluetoothManager.adapter == null) {
             return SkillResult.Failure("This device doesn't have Bluetooth")
         }
-        if (enable) bt.enable() else bt.disable()
-        return SkillResult.Success(if (enable) "Bluetooth turned on" else "Bluetooth turned off")
+        val intent = Intent(
+            if (enable) BluetoothAdapter.ACTION_REQUEST_ENABLE
+            else Settings.ACTION_BLUETOOTH_SETTINGS
+        ).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        if (intent.resolveActivity(context.packageManager) == null) {
+            return SkillResult.Failure("Bluetooth settings aren't available")
+        }
+        context.startActivity(intent)
+        return SkillResult.Success(
+            if (enable) "Opening the Bluetooth enable prompt"
+            else "Opening Bluetooth settings to turn it off"
+        )
     }
 
     private fun setDnd(value: String): SkillResult<String> {

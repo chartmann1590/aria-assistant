@@ -1,5 +1,6 @@
 package com.aria.assistant.billing
 
+import com.aria.assistant.BuildConfig
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -53,14 +54,32 @@ class FeatureGate @Inject constructor(
     val isPremium: StateFlow<Boolean> = billingManager.isPremium
 
     fun isAllowed(toolName: String): Boolean {
+        if (!BuildConfig.ENABLE_ACCESSIBILITY_AUTOMATION && toolName in accessibilityTools) return false
+        if (!BuildConfig.ENABLE_RESTRICTED_MESSAGING && toolName in restrictedMessagingTools) return false
         val feature = Feature.featureForTool(toolName) ?: return true
         return !feature.isPremium || billingManager.isPremium.value
     }
 
     fun isAllowed(feature: Feature): Boolean {
-        return !feature.isPremium || billingManager.isPremium.value
+        return isShipped(feature) && (!feature.isPremium || billingManager.isPremium.value)
     }
 
     val premiumFeatures: List<Feature>
-        get() = Feature.entries.filter { it.isPremium }
+        get() = Feature.entries.filter { feature ->
+            feature.isPremium && isShipped(feature)
+        }
+
+    private fun isShipped(feature: Feature): Boolean = when (feature) {
+        Feature.SCREEN_CONTROL -> BuildConfig.ENABLE_ACCESSIBILITY_AUTOMATION
+        Feature.SMS_READ, Feature.SMS_SEND, Feature.CALL_HISTORY, Feature.CALL_CONTROL ->
+            BuildConfig.ENABLE_RESTRICTED_MESSAGING
+        else -> true
+    }
+
+    private companion object {
+        val accessibilityTools = setOf("read_screen", "click_on", "scroll")
+        val restrictedMessagingTools = setOf(
+            "read_sms", "send_sms", "read_last_calls", "answer_call", "reject_call"
+        )
+    }
 }

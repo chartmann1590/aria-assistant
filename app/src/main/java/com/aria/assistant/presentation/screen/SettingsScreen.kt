@@ -1,5 +1,6 @@
 package com.aria.assistant.presentation.screen
 
+import android.app.Activity
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -39,6 +40,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -51,7 +54,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
+import com.aria.assistant.translation.TranslatedText as Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -96,6 +99,10 @@ import com.aria.assistant.presentation.viewmodel.FeedbackViewModel
 import com.aria.assistant.presentation.viewmodel.FeedbackFormState
 import com.aria.assistant.presentation.viewmodel.IssueDetailState
 import com.aria.assistant.presentation.viewmodel.SettingsViewModel
+import com.aria.assistant.translation.TranslationStatus
+import com.aria.assistant.translation.UiTranslationManager
+import com.aria.assistant.translation.translatedUiText
+import com.aria.assistant.web.WebVerificationMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,29 +112,17 @@ fun SettingsScreen(
     onBack: () -> Unit = {},
     onUpgrade: () -> Unit = {},
     onNavigateToPermissions: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {},
+    onNavigateToFeedback: () -> Unit = {},
 ) {
     val voiceConfig by viewModel.voiceConfig.collectAsState()
     val downloadStates by viewModel.downloadStates.collectAsState()
     val isPremium by viewModel.isPremium.collectAsState()
-
-    val formState by feedbackViewModel.formState.collectAsState()
-    val issueDetail by feedbackViewModel.issueDetail.collectAsState()
-    val bugReports by feedbackViewModel.bugReports.collectAsState(initial = emptyList())
-
-    var showReportDialog by remember { mutableStateOf(false) }
-    var showIssueDetail by remember { mutableStateOf<Int?>(null) }
-
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) feedbackViewModel.updateImageUri(uri)
-    }
-
-    val replyImagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        if (uri != null) feedbackViewModel.updateReplyImageUri(uri)
-    }
+    val translationStatus by viewModel.translationStatus.collectAsState()
+    val privacyOptionsRequired by viewModel.privacyOptionsRequired.collectAsState()
+    val activity = LocalContext.current as? Activity
+    var languageMenuExpanded by remember { mutableStateOf(false) }
+    var webModeMenuExpanded by remember { mutableStateOf(false) }
 
     NebulaBackground(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -152,7 +147,7 @@ fun SettingsScreen(
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = translatedUiText("Back"),
                         tint = TextPrimary,
                         modifier = Modifier.size(20.dp)
                     )
@@ -217,6 +212,119 @@ fun SettingsScreen(
 
                 SectionLabel("Preferences")
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                    val selectedLanguage = viewModel.supportedUiLanguages.firstOrNull {
+                        it.tag == voiceConfig.uiLanguage
+                    } ?: viewModel.supportedUiLanguages.first()
+                    SettingRow(
+                        label = "App Language",
+                        sub = "Translate menus and interface text on this device"
+                    ) {
+                        Box {
+                            OutlinedButton(
+                                onClick = { languageMenuExpanded = true },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                                border = androidx.compose.foundation.BorderStroke(0.5.dp, GlassStroke)
+                            ) {
+                                Text(
+                                    selectedLanguage.nativeName,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    translate = false
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = languageMenuExpanded,
+                                onDismissRequest = { languageMenuExpanded = false }
+                            ) {
+                                viewModel.supportedUiLanguages.forEach { language ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                if (language.nativeName.equals(language.englishName, ignoreCase = true)) {
+                                                    language.nativeName
+                                                } else {
+                                                    "${language.nativeName} (${language.englishName})"
+                                                },
+                                                translate = false
+                                            )
+                                        },
+                                        onClick = {
+                                            languageMenuExpanded = false
+                                            viewModel.updateUiLanguage(language.tag)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    when (val status = translationStatus) {
+                        is TranslationStatus.Downloading -> Text(
+                            "Downloading the language model…",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AuroraViolet,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                        is TranslationStatus.Error -> Text(
+                            "Translation model download failed: ${status.message}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFEF4444),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            translate = false
+                        )
+                        TranslationStatus.Ready -> if (selectedLanguage.tag != UiTranslationManager.ENGLISH) {
+                            Text(
+                                "Language model downloaded — translations work offline",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AuroraTeal,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        "Powered by Google ML Kit",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextTertiary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                    SettingRow(
+                        label = "Web Verification",
+                        sub = "Free public web search; queries are sent to search providers"
+                    ) {
+                        Box {
+                            OutlinedButton(
+                                onClick = { webModeMenuExpanded = true },
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                                border = androidx.compose.foundation.BorderStroke(0.5.dp, GlassStroke)
+                            ) {
+                                Text(
+                                    when (voiceConfig.webVerificationMode) {
+                                        WebVerificationMode.ALWAYS_FACTUAL -> "All facts"
+                                        WebVerificationMode.CURRENT_ONLY -> "Current facts"
+                                        WebVerificationMode.EXPLICIT_ONLY -> "When asked"
+                                    },
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = webModeMenuExpanded,
+                                onDismissRequest = { webModeMenuExpanded = false }
+                            ) {
+                                listOf(
+                                    WebVerificationMode.ALWAYS_FACTUAL to "All factual questions",
+                                    WebVerificationMode.CURRENT_ONLY to "Current information only",
+                                    WebVerificationMode.EXPLICIT_ONLY to "Only when I ask"
+                                ).forEach { (mode, label) ->
+                                    DropdownMenuItem(
+                                        text = { Text(label) },
+                                        onClick = {
+                                            webModeMenuExpanded = false
+                                            viewModel.updateWebVerificationMode(mode)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
                     SettingRow(label = "Privacy Mode", sub = "Process speech entirely on-device (Whisper STT)") {
                         Switch(
                             checked = voiceConfig.privacyMode,
@@ -278,6 +386,7 @@ fun SettingsScreen(
                             )
                         }
                     }
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -321,86 +430,54 @@ fun SettingsScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
+                SectionLabel("Privacy")
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    SettingRow(
+                        label = "Ad privacy choices",
+                        sub = if (privacyOptionsRequired) {
+                            "Review or change your advertising consent"
+                        } else {
+                            "Advertising privacy settings"
+                        }
+                    ) {
+                        Button(
+                            onClick = { activity?.let(viewModel::showAdPrivacyOptions) },
+                            enabled = activity != null,
+                            modifier = Modifier.height(32.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = AuroraViolet)
+                        ) {
+                            Text("Open", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 SectionLabel("Support & Feedback")
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    val configErr = feedbackViewModel.configError
-                    if (configErr != null) {
-                        Text(
-                            text = configErr,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = AuroraAmber,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                        SettingRow(
-                            label = "Report a Problem",
-                            sub = "Submit feedback or bug reports to GitHub"
+                    SettingRow(
+                        label = "Support & Feedback",
+                        sub = "Report bugs, track issues, reply to threads"
+                    ) {
+                        Button(
+                            onClick = onNavigateToFeedback,
+                            modifier = Modifier.height(32.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (feedbackViewModel.isConfigured) AuroraViolet else TextTertiary
+                            ),
+                            enabled = feedbackViewModel.isConfigured
                         ) {
-                            Button(
-                                onClick = {
-                                    feedbackViewModel.resetForm()
-                                    showReportDialog = true
-                                },
-                                modifier = Modifier.height(32.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (feedbackViewModel.isConfigured) AuroraViolet else TextTertiary
-                                ),
-                                enabled = feedbackViewModel.isConfigured
-                            ) {
-                                Text(
-                                    "Submit",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = Color.White
-                                )
-                            }
+                            Text(
+                                "Open",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White
+                            )
                         }
                     }
                 }
 
-                if (bugReports.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    GlassCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                            bugReports.forEach { report ->
-                                BugReportRow(
-                                    report = report,
-                                    onClick = { showIssueDetail = report.number }
-                                )
-                                if (report != bugReports.last()) {
-                                    HorizontalDivider(
-                                        color = Color.White.copy(alpha = 0.06f),
-                                        modifier = Modifier.padding(horizontal = 16.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
-    }
-
-    if (showReportDialog) {
-        ReportDialog(
-            feedbackViewModel = feedbackViewModel,
-            formState = formState,
-            onImagePick = { imagePickerLauncher.launch("image/*") },
-            onDismiss = { showReportDialog = false }
-        )
-    }
-
-    showIssueDetail?.let { issueNumber ->
-        IssueDetailDialog(
-            feedbackViewModel = feedbackViewModel,
-            issueDetail = issueDetail,
-            issueNumber = issueNumber,
-            onReplyImagePick = { replyImagePickerLauncher.launch("image/*") },
-            onDismiss = {
-                showIssueDetail = null
-                feedbackViewModel.clearIssueDetail()
-            }
-        )
     }
 }
 
@@ -787,7 +864,7 @@ private fun ReportDialog(
                         TextButton(onClick = { feedbackViewModel.updateImageUri(null) }) {
                             Icon(
                                 Icons.Default.Close,
-                                contentDescription = "Remove",
+                                contentDescription = translatedUiText("Remove"),
                                 modifier = Modifier.size(14.dp),
                                 tint = Color(0xFFEF4444)
                             )
@@ -1013,7 +1090,7 @@ private fun IssueDetailDialog(
                             TextButton(onClick = { feedbackViewModel.updateReplyImageUri(null) }) {
                                 Icon(
                                     Icons.Default.Close,
-                                    contentDescription = "Remove",
+                                    contentDescription = translatedUiText("Remove"),
                                     modifier = Modifier.size(14.dp),
                                     tint = Color(0xFFEF4444)
                                 )
@@ -1098,7 +1175,7 @@ private fun ImagePreview(uri: Uri, modifier: Modifier = Modifier) {
     bitmap?.let {
         Image(
             bitmap = it.asImageBitmap(),
-            contentDescription = "Image preview",
+            contentDescription = translatedUiText("Image preview"),
             modifier = modifier
                 .clip(RoundedCornerShape(8.dp))
                 .border(0.5.dp, GlassStroke, RoundedCornerShape(8.dp)),

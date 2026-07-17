@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.aria.assistant.presentation.component.NebulaBackground
 
 @Composable
 fun AriaNavHost(navController: NavHostController, startDestination: String = "onboarding") {
@@ -25,7 +26,9 @@ fun AriaNavHost(navController: NavHostController, startDestination: String = "on
             SettingsScreen(
                 onBack = { navController.popBackStack() },
                 onUpgrade = { navController.navigate("premium") },
-                onNavigateToPermissions = { navController.navigate("permissions") }
+                onNavigateToPermissions = { navController.navigate("permissions") },
+                onNavigateToAbout = { navController.navigate("about") },
+                onNavigateToFeedback = { navController.navigate("feedback") }
             )
         }
         composable("history") {
@@ -36,6 +39,12 @@ fun AriaNavHost(navController: NavHostController, startDestination: String = "on
         }
         composable("premium") {
             PremiumScreen(onBack = { navController.popBackStack() })
+        }
+        composable("about") {
+            AboutScreen(onBack = { navController.popBackStack() })
+        }
+        composable("feedback") {
+            FeedbackScreen(onBack = { navController.popBackStack() })
         }
     }
 }

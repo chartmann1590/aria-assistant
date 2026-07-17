@@ -13,6 +13,7 @@ class PremiumViewModel @Inject constructor(
 ) : ViewModel() {
 
     val isPremium: StateFlow<Boolean> = billingManager.isPremium
+    val formattedPrices: StateFlow<Map<String, String>> = billingManager.formattedPrices
 
     fun subscribe(productId: String, activity: Activity) {
         billingManager.launchBillingFlow(activity, productId)

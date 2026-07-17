@@ -65,7 +65,11 @@ class PermissionManager @Inject constructor(
             perms = listOf(android.Manifest.permission.READ_CALENDAR, android.Manifest.permission.WRITE_CALENDAR)
         ),
         PhoneCapability.NOTIFICATIONS to CapabilitySpec.Runtime(
-            perms = listOf(android.Manifest.permission.POST_NOTIFICATIONS)
+            perms = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                listOf(android.Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                emptyList()
+            }
         ),
         PhoneCapability.NOTIFICATION_LISTENER to CapabilitySpec.Special(
             check = {
@@ -117,7 +121,11 @@ class PermissionManager @Inject constructor(
             perms = emptyList()
         ),
         PhoneCapability.BLUETOOTH to CapabilitySpec.Runtime(
-            perms = listOf(android.Manifest.permission.BLUETOOTH_CONNECT)
+            perms = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                listOf(android.Manifest.permission.BLUETOOTH_CONNECT)
+            } else {
+                emptyList()
+            }
         ),
         PhoneCapability.APP_LAUNCH to CapabilitySpec.Special(
             check = { true },
@@ -129,8 +137,7 @@ class PermissionManager @Inject constructor(
                 pm?.isIgnoringBatteryOptimizations(context.packageName) ?: true
             },
             intentFactory = {
-                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = android.net.Uri.parse("package:${context.packageName}")
+                Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
             }

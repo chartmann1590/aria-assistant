@@ -18,7 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import com.aria.assistant.translation.TranslatedText as Text
+import com.aria.assistant.translation.translatedUiText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,12 +78,13 @@ fun SearchResultCard(item: SearchResultItem, modifier: Modifier = Modifier) {
             Text(
                 text = extractDomain(item.url),
                 style = MaterialTheme.typography.labelSmall,
-                color = AuroraViolet.copy(alpha = 0.75f)
+                color = AuroraViolet.copy(alpha = 0.75f),
+                translate = false
             )
             Spacer(modifier = Modifier.width(4.dp))
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                contentDescription = "Open",
+                contentDescription = translatedUiText("Open"),
                 tint = AuroraViolet.copy(alpha = 0.5f),
                 modifier = Modifier.size(11.dp)
             )

@@ -61,6 +61,8 @@ Everything above, plus:
 - 5 additional premium TTS voices
 - Gemma E4B enhanced model
 
+The Google Play build intentionally excludes SMS/Call Log permissions and AccessibilityService-based screen automation to comply with Play policy. Those rows describe developer/GitHub builds; Play surfaces only the capabilities actually shipped in its release variant.
+
 ---
 
 ## Privacy
@@ -73,9 +75,11 @@ The only network requests Aria makes:
 1. Downloading the AI model on first launch (one-time, ~2.5 GB)
 2. Web-verification queries, according to the mode selected in Settings
 3. ML Kit translation-model downloads; translation is offline after download
-4. Firebase analytics, crash diagnostics, and performance telemetry
-5. Optional GitHub issue reports submitted from Settings, including only the details and attachments you choose
-6. Google Play Billing to verify subscription status (token only, no personal data)
+4. Firebase Analytics, Crashlytics, and Performance Monitoring technical telemetry
+5. Google AdMob ads and consent services for free users; Premium users see no ads
+6. Optional GitHub issue reports submitted from Settings, including only the details and attachments you choose
+7. Optional AI quality reports through Cloudflare; conversation text is omitted unless explicitly included
+8. Google Play Billing to verify subscription status (token only, no payment-card data)
 
 See the full [Privacy Policy](https://chartmann1590.github.io/aria-assistant/privacy.html) for a per-permission breakdown.
 
@@ -125,7 +129,11 @@ Crashlytics mapping uploads and Performance Monitoring bytecode/network instrume
 
 ### In-app GitHub issue reporting
 
-Settings → Support & Feedback can create GitHub issues, attach a screenshot and diagnostics with user consent, track reports, and reply to issue threads. Configure `github.api.token`, `github.repo.owner`, and `github.repo.name` in untracked `local.properties`; CI supplies the same values through repository secrets.
+Settings → Support & Feedback can create GitHub issues, attach a screenshot and diagnostics with user consent, track reports, and reply to issue threads without opening a browser or asking the user to authenticate. The Play build calls the fixed Cloudflare proxy in `cloudflare/quality-feedback`; its GitHub token is stored only as a Worker/GitHub secret and is never embedded in the APK or AAB. Developer builds may override the proxy with `github.proxy.url` in untracked `local.properties`.
+
+### AI quality feedback
+
+Assistant responses include an optional thumbs-down report. The default payload contains only a problem category, app version, language, and response length. Prompt and response text are included only after an explicit opt-in disclosure. The endpoint is a Cloudflare Worker backed by D1 in `cloudflare/quality-feedback`; `.github/workflows/monitor-ai-quality.yml` opens or updates a GitHub trend issue from aggregate data. Configure a different public endpoint with `quality.feedback.url` in untracked `local.properties` if needed.
 
 ### Google AdMob configuration
 

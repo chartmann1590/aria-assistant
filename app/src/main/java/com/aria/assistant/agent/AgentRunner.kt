@@ -3,6 +3,7 @@ package com.aria.assistant.agent
 import com.aria.assistant.billing.FeatureGate
 import com.aria.assistant.domain.model.AriaState
 import com.aria.assistant.domain.repository.ConversationRepository
+import com.aria.assistant.domain.repository.SettingsRepository
 import com.aria.assistant.engine.AriaLogger
 import com.aria.assistant.engine.AriaTTS
 import com.aria.assistant.engine.LlmEngine
@@ -17,6 +18,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import org.json.JSONObject
+import com.aria.assistant.web.VerificationStatus
+import com.aria.assistant.web.VerificationStep
+import com.aria.assistant.web.VerificationTrace
+import com.aria.assistant.web.WebResearchResult
+import com.aria.assistant.web.WebResearchService
+import com.aria.assistant.web.WebVerificationMetadata
+import com.aria.assistant.web.WebVerificationPolicy
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,10 +37,16 @@ class AgentRunner @Inject constructor(
     private val actionParser: ActionParser,
     private val ariaTTS: AriaTTS,
     private val featureGate: FeatureGate,
-    private val conversationRepo: ConversationRepository
+    private val conversationRepo: ConversationRepository,
+    private val settingsRepository: SettingsRepository,
+    private val webVerificationPolicy: WebVerificationPolicy,
+    private val webResearchService: WebResearchService
 ) {
     private val _streamingText = MutableStateFlow("")
     val streamingText: StateFlow<String> = _streamingText.asStateFlow()
+
+    private val _verificationActivity = MutableStateFlow<String?>(null)
+    val verificationActivity: StateFlow<String?> = _verificationActivity.asStateFlow()
 
     private val _permissionRequest = MutableSharedFlow<PhoneCapability>(replay = 1, extraBufferCapacity = 1)
     val permissionRequest: SharedFlow<PhoneCapability> = _permissionRequest.asSharedFlow()
@@ -50,10 +64,33 @@ class AgentRunner @Inject constructor(
         val systemMsg = ChatMessage(ChatMessage.Role.SYSTEM, promptBuilder.buildSystemPrompt(tools, deviceContext))
 
         val history = buildHistory()
+        var webResearch: WebResearchResult? = null
+        val verificationMode = settingsRepository.getVoiceConfig().first().webVerificationMode
+        if (webVerificationPolicy.shouldVerify(transcript, verificationMode)) {
+            _verificationActivity.value = "Searching the web…"
+            webResearch = runCatching { webResearchService.research(transcript) }.getOrElse { error ->
+                AriaLogger.e("AgentRunner", "Web verification failed: ${error.message}", error)
+                WebResearchResult(
+                    VerificationTrace(
+                        query = transcript,
+                        status = VerificationStatus.UNAVAILABLE,
+                        sources = emptyList(),
+                        steps = listOf(VerificationStep("Search", "Web verification failed safely")),
+                        retrievedAt = System.currentTimeMillis(),
+                        elapsedMs = 0L,
+                        warning = "Web verification could not be completed. The answer may rely on local model knowledge."
+                    )
+                )
+            }
+            _verificationActivity.value = "Cross-checking ${webResearch.trace.sources.size} sources…"
+        }
         val messages = mutableListOf<ChatMessage>().apply {
             add(systemMsg)
             addAll(history)
             add(ChatMessage(ChatMessage.Role.USER, "[${deviceContext.toPromptSection()}] $transcript"))
+            webResearch?.let {
+                add(ChatMessage(ChatMessage.Role.TOOL, it.toPromptEvidence()))
+            }
         }
 
         var finalText: String? = null
@@ -91,6 +128,7 @@ class AgentRunner @Inject constructor(
 
             when (toolResult) {
                 is ToolResult.Success -> {
+                    toolResult.webResearch?.let { webResearch = it }
                     messages.add(ChatMessage(ChatMessage.Role.MODEL, responseText))
                     messages.add(ChatMessage(ChatMessage.Role.TOOL, "Success: ${toolResult.payload}"))
                 }
@@ -100,10 +138,12 @@ class AgentRunner @Inject constructor(
                 }
                 is ToolResult.NeedsPermission -> {
                     _permissionRequest.tryEmit(toolResult.capability)
+                    _verificationActivity.value = null
                     speak("I need permission to ${toolResult.capability.rationale}. Please grant it in settings.", onStateChange)
                     return
                 }
                 is ToolResult.NeedsClarification -> {
+                    _verificationActivity.value = null
                     speak(toolResult.question, onStateChange)
                     return
                 }
@@ -119,9 +159,16 @@ class AgentRunner @Inject constructor(
             }
         }
 
-        val output = finalText ?: "Done!"
+        var output = finalText ?: "Done!"
+        if (webResearch?.trace?.status == VerificationStatus.UNAVAILABLE &&
+            !output.startsWith("Couldn’t verify", ignoreCase = true)
+        ) {
+            output = "Couldn’t verify this on the web right now. $output"
+        }
         _streamingText.value = cleanForDisplay(output)
-        saveAndSpeak(output, onStateChange)
+        val metadata = webResearch?.let { WebVerificationMetadata.encode(it.trace) }
+        _verificationActivity.value = null
+        saveAndSpeak(output, metadata, onStateChange)
     }
 
     private suspend fun collectFullResponse(messages: List<ChatMessage>): String {
@@ -167,9 +214,9 @@ class AgentRunner @Inject constructor(
         onStateChange(AriaState.IDLE)
     }
 
-    private suspend fun saveAndSpeak(text: String, onStateChange: (AriaState) -> Unit) {
-        conversationRepo.saveMessage("aria", text, currentSessionId)
-        speak(text, onStateChange)
+    private suspend fun saveAndSpeak(text: String, metadata: String?, onStateChange: (AriaState) -> Unit) {
+        conversationRepo.saveMessage("aria", text, currentSessionId, metadata)
+        speak(text.replace(Regex("\\s*\\[\\d+]"), "").replace(Regex("\\s{2,}"), " ").trim(), onStateChange)
     }
 
     fun stopSpeaking() {

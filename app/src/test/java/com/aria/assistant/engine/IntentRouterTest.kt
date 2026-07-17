@@ -438,4 +438,33 @@ class IntentRouterTest {
         assertTrue(result is AriaIntent.GetLocation)
         assertEquals("coffee", (result as AriaIntent.GetLocation).query)
     }
+
+    @Test
+    fun `all registered tool vocabulary resolves to a typed intent`() {
+        val actions = listOf(
+            "read_sms" to "{\"limit\":5}",
+            "dismiss_notification" to "{\"notification_key\":\"key123\"}",
+            "resolve_contact" to "{\"name\":\"Mom\"}",
+            "cancel_timer" to "{}",
+            "cancel_alarm" to "{\"alarm_id\":\"alarm-1\"}",
+            "read_last_calls" to "{\"limit\":5}",
+            "answer_call" to "{}",
+            "reject_call" to "{}",
+            "nearby_search" to "{\"query\":\"coffee\"}",
+            "reverse_geocode" to "{\"lat\":37.7,\"lng\":-122.4}",
+            "get_storage" to "{}",
+            "share_to_whatsapp" to "{\"contact\":\"Mom\",\"message\":\"Hi\"}",
+            "share_to_telegram" to "{\"contact\":\"Mom\",\"message\":\"Hi\"}",
+            "flashlight" to "{\"on\":true}",
+            "clipboard_read" to "{}",
+            "clipboard_write" to "{\"text\":\"hello\"}",
+            "email_compose" to "{\"to\":\"a@example.com\",\"subject\":\"Hi\",\"body\":\"Hello\"}",
+            "convert" to "{\"value\":100,\"from\":\"km\",\"to\":\"mi\"}"
+        )
+
+        actions.forEach { (action, params) ->
+            val result = router.resolve("{\"action\":\"$action\",\"params\":$params}")
+            assertTrue("$action should resolve to a typed intent", result !is AriaIntent.Unrecognized)
+        }
+    }
 }

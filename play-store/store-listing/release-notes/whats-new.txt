@@ -1,0 +1,9 @@
+Initial production draft:
+
+• Private on-device speech, language, and voice processing
+• Optional multi-source web verification with visible sources
+• On-device interface translation after each language model download
+• Clear permission disclosures and optional sensitive capabilities
+• Consent-aware ads for free users; Premium removes ads
+• Privacy-minimized AI response reporting and GitHub support reporting
+• Reliability fixes informed by Firebase Crashlytics

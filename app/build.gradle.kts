@@ -7,6 +7,9 @@ plugins {
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.firebase.crashlytics) apply false
+    alias(libs.plugins.firebase.perf) apply false
 }
 
 val releaseKeystorePropertiesFile = rootProject.file("keystore.properties")
@@ -19,11 +22,29 @@ val releaseKeystoreProperties = Properties().apply {
 val releaseVersionCode = providers.environmentVariable("ANDROID_VERSION_CODE")
     .orNull
     ?.toIntOrNull()
+    ?: providers.environmentVariable("GITHUB_RUN_NUMBER")
+        .orNull
+        ?.toIntOrNull()
+        ?.let { 200_000_000 + it }
     ?: 1
 val releaseVersionName = providers.environmentVariable("ANDROID_VERSION_NAME")
     .orNull
     ?.takeIf { it.isNotBlank() }
+    ?: providers.environmentVariable("GITHUB_RUN_NUMBER")
+        .orNull
+        ?.takeIf { it.isNotBlank() }
+        ?.let { "1.0.0-ci.$it" }
     ?: "1.0.0"
+
+val hasFirebaseConfig = file("google-services.json").exists() ||
+    file("src/debug/google-services.json").exists() ||
+    file("src/release/google-services.json").exists()
+
+if (hasFirebaseConfig) {
+    pluginManager.apply("com.google.gms.google-services")
+    pluginManager.apply("com.google.firebase.crashlytics")
+    pluginManager.apply("com.google.firebase.firebase-perf")
+}
 
 android {
     namespace = "com.aria.assistant"
@@ -59,13 +80,18 @@ android {
         }
 
         val githubApiToken = readProp("github.api.token")
-        val githubRepoOwner = readProp("github.repo.owner")
-        val githubRepoName = readProp("github.repo.name")
+        val githubRepoOwner = readProp("github.repo.owner").ifBlank { "chartmann1590" }
+        val githubRepoName = readProp("github.repo.name").ifBlank { "aria-assistant" }
 
         buildConfigField("String", "GITHUB_API_TOKEN", "\"${githubApiToken}\"")
         buildConfigField("String", "GITHUB_REPO_OWNER", "\"${githubRepoOwner}\"")
         buildConfigField("String", "GITHUB_REPO_NAME", "\"${githubRepoName}\"")
         buildConfigField("String", "FEEDBACK_ASSETS_DIR", "\"feedback-assets\"")
+        val qualityFeedbackUrl = readProp("quality.feedback.url").ifBlank {
+            "https://aria-quality-feedback.charles-h-hartmann1.workers.dev"
+        }
+        buildConfigField("String", "QUALITY_FEEDBACK_URL", "\"${qualityFeedbackUrl}\"")
+        buildConfigField("String", "GITHUB_PROXY_URL", "\"${qualityFeedbackUrl}/\"")
 
         // AdMob — falls back to Google's public test IDs so a checkout without
         // local.properties still builds and shows test ads instead of failing.
@@ -94,6 +120,10 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             isDebuggable = false
+            buildConfigField("boolean", "ENABLE_ACCESSIBILITY_AUTOMATION", "false")
+            buildConfigField("boolean", "ENABLE_RESTRICTED_MESSAGING", "false")
+            // Never package a GitHub credential in a distributable APK/AAB.
+            buildConfigField("String", "GITHUB_API_TOKEN", "\"\"")
             signingConfigs.findByName("release")?.let { signingConfig = it }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -101,6 +131,8 @@ android {
             isDebuggable = true
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            buildConfigField("boolean", "ENABLE_ACCESSIBILITY_AUTOMATION", "true")
+            buildConfigField("boolean", "ENABLE_RESTRICTED_MESSAGING", "true")
         }
     }
 
@@ -157,10 +189,17 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.activity.compose)
+    implementation(libs.jsoup)
     implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.litertlm.android)
     implementation(libs.play.services.location)
     implementation(libs.play.services.ads)
+    implementation(libs.user.messaging.platform)
+    implementation(libs.mlkit.translate)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.perf)
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.mockito:mockito-core:5.12.0")

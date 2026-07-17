@@ -1,0 +1,3 @@
+Application
+Category: Productivity
+Tags: AI, Assistant, Voice, Privacy, On-Device, LLM

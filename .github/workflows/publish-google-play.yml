@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       confirm_play_publish:
-        description: 'Type "publish" to confirm a production Play release'
+        description: 'Type "publish" to confirm uploading a production draft'
         required: true
         type: string
       release_notes:
@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   publish:
-    name: Build and publish production release
+    name: Build and upload production draft
     runs-on: ubuntu-latest
 
     steps:
@@ -52,12 +52,11 @@ jobs:
           ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
           ADMOB_BANNER_AD_UNIT_ID: ${{ secrets.ADMOB_BANNER_AD_UNIT_ID }}
           ADMOB_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_INTERSTITIAL_AD_UNIT_ID }}
-          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
           GH_REPO_OWNER: ${{ secrets.GH_REPO_OWNER }}
           GH_REPO_NAME: ${{ secrets.GH_REPO_NAME }}
         run: |
           missing=0
-          for name in GOOGLE_PLAY_SERVICE_ACCOUNT_JSON GOOGLE_SERVICES_JSON RELEASE_KEYSTORE RELEASE_KEYSTORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD ADMOB_APP_ID ADMOB_BANNER_AD_UNIT_ID ADMOB_INTERSTITIAL_AD_UNIT_ID GH_API_TOKEN GH_REPO_OWNER GH_REPO_NAME; do
+          for name in GOOGLE_PLAY_SERVICE_ACCOUNT_JSON GOOGLE_SERVICES_JSON RELEASE_KEYSTORE RELEASE_KEYSTORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD ADMOB_APP_ID ADMOB_BANNER_AD_UNIT_ID ADMOB_INTERSTITIAL_AD_UNIT_ID GH_REPO_OWNER GH_REPO_NAME; do
             if [ -z "${!name}" ]; then
               echo "Required secret is missing: $name"
               missing=1
@@ -75,7 +74,6 @@ jobs:
           ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
           ADMOB_BANNER_AD_UNIT_ID: ${{ secrets.ADMOB_BANNER_AD_UNIT_ID }}
           ADMOB_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_INTERSTITIAL_AD_UNIT_ID }}
-          GH_API_TOKEN: ${{ secrets.GH_API_TOKEN }}
           GH_REPO_OWNER: ${{ secrets.GH_REPO_OWNER }}
           GH_REPO_NAME: ${{ secrets.GH_REPO_NAME }}
         run: |
@@ -91,7 +89,6 @@ jobs:
             printf 'admob.app.id=%s\n' "$ADMOB_APP_ID"
             printf 'admob.banner.id=%s\n' "$ADMOB_BANNER_AD_UNIT_ID"
             printf 'admob.interstitial.id=%s\n' "$ADMOB_INTERSTITIAL_AD_UNIT_ID"
-            printf 'github.api.token=%s\n' "$GH_API_TOKEN"
             printf 'github.repo.owner=%s\n' "$GH_REPO_OWNER"
             printf 'github.repo.name=%s\n' "$GH_REPO_NAME"
           } > local.properties
@@ -143,13 +140,13 @@ jobs:
           path: app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
-      - name: Publish production release to Google Play
+      - name: Upload production draft to Google Play
         uses: r0adkll/upload-google-play@v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.aria.assistant
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
           track: production
-          status: completed
+          status: draft
           whatsNewDirectory: distribution/whatsnew
           mappingFile: app/build/outputs/mapping/release/mapping.txt

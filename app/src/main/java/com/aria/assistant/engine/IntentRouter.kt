@@ -15,6 +15,7 @@ class IntentRouter @Inject constructor(
     private val agentRunner: AgentRunner
 ) {
     val streamingText: StateFlow<String> = agentRunner.streamingText
+    val verificationActivity: StateFlow<String?> = agentRunner.verificationActivity
     val permissionRequest: SharedFlow<PhoneCapability> = agentRunner.permissionRequest
 
     fun setSessionId(id: String) {
@@ -72,6 +73,32 @@ class IntentRouter @Inject constructor(
                 "scroll" -> AriaIntent.Scroll(p.optString("direction", "down"), p.optString("container", null))
                 "get_battery" -> AriaIntent.GetBattery(p.optString("detail", null))
                 "get_time" -> AriaIntent.GetTime(p.optString("format", null))
+                "read_sms" -> AriaIntent.ReadSms(if (p.has("limit")) p.optInt("limit") else null)
+                "dismiss_notification" -> AriaIntent.DismissNotification(p.optString("notification_key", ""))
+                "resolve_contact" -> AriaIntent.ResolveContact(p.optString("name", ""))
+                "cancel_timer" -> AriaIntent.CancelTimer
+                "cancel_alarm" -> AriaIntent.CancelAlarm(p.optString("alarm_id", ""))
+                "read_last_calls" -> AriaIntent.ReadLastCalls(if (p.has("limit")) p.optInt("limit") else null)
+                "answer_call" -> AriaIntent.AnswerCall
+                "reject_call" -> AriaIntent.RejectCall
+                "nearby_search" -> AriaIntent.NearbySearch(p.optString("query", ""))
+                "reverse_geocode" -> AriaIntent.ReverseGeocode(p.optDouble("lat"), p.optDouble("lng"))
+                "get_storage" -> AriaIntent.GetStorage
+                "share_to_whatsapp" -> AriaIntent.ShareToWhatsApp(
+                    p.optString("contact", ""), p.optString("message", "")
+                )
+                "share_to_telegram" -> AriaIntent.ShareToTelegram(
+                    p.optString("contact", ""), p.optString("message", "")
+                )
+                "flashlight" -> AriaIntent.Flashlight(p.optBoolean("on"))
+                "clipboard_read" -> AriaIntent.ClipboardRead
+                "clipboard_write" -> AriaIntent.ClipboardWrite(p.optString("text", ""))
+                "email_compose" -> AriaIntent.EmailCompose(
+                    p.optString("to", ""), p.optString("subject", ""), p.optString("body", "")
+                )
+                "convert" -> AriaIntent.Convert(
+                    p.optDouble("value"), p.optString("from", ""), p.optString("to", "")
+                )
                 else -> AriaIntent.Unrecognized
             }
         } catch (_: Exception) {

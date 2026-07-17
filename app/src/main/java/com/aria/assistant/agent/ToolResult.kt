@@ -2,9 +2,10 @@ package com.aria.assistant.agent
 
 import com.aria.assistant.permission.PhoneCapability
 import com.aria.assistant.skill.SkillResult
+import com.aria.assistant.web.WebResearchResult
 
 sealed interface ToolResult {
-    data class Success(val payload: String) : ToolResult
+    data class Success(val payload: String, val webResearch: WebResearchResult? = null) : ToolResult
     data class Failure(val reason: String) : ToolResult
     data class NeedsPermission(val capability: PhoneCapability) : ToolResult
     data class NeedsClarification(val question: String) : ToolResult

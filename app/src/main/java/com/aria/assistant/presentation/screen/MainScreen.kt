@@ -2,6 +2,7 @@ package com.aria.assistant.presentation.screen
 
 import android.Manifest
 import android.app.Activity
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -39,6 +40,10 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.MaterialTheme
 import com.aria.assistant.translation.TranslatedText as Text
 import com.aria.assistant.translation.translatedUiText
@@ -63,6 +68,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.aria.assistant.domain.model.AriaState
+import com.aria.assistant.data.model.ConversationMessage
 import com.aria.assistant.presentation.component.AriaOrb
 import com.aria.assistant.presentation.component.BannerAdView
 import com.aria.assistant.presentation.component.ConversationBubble
@@ -90,7 +96,14 @@ fun MainScreen(
     val streamingText by viewModel.streamingText.collectAsStateWithLifecycle()
     val verificationActivity by viewModel.verificationActivity.collectAsStateWithLifecycle()
     val isPremium by viewModel.isPremium.collectAsStateWithLifecycle()
+    val canRequestAds by viewModel.canRequestAds.collectAsStateWithLifecycle()
+    val qualityFeedbackStatus by viewModel.qualityFeedbackStatus.collectAsStateWithLifecycle()
     val activity = LocalContext.current as? Activity
+    val context = LocalContext.current
+
+    LaunchedEffect(activity) {
+        activity?.let(viewModel::requestAdConsent)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.showInterstitialEvents.collect {
@@ -98,6 +111,14 @@ fun MainScreen(
         }
     }
     var textInput by remember { mutableStateOf("") }
+    var reportMessage by remember { mutableStateOf<ConversationMessage?>(null) }
+
+    LaunchedEffect(qualityFeedbackStatus) {
+        qualityFeedbackStatus?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearQualityFeedbackStatus()
+        }
+    }
 
     val micPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -255,11 +276,26 @@ fun MainScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(messages.take(10)) { message ->
-                    ConversationBubble(message = message)
+                    val messageIndex = messages.indexOf(message)
+                    ConversationBubble(
+                        message = message,
+                        onReportResponse = { reportMessage = it },
+                        onEdit = { textInput = it.content },
+                        onRetry = {
+                            val prompt = if (it.role == "user") {
+                                it.content
+                            } else {
+                                messages.drop(messageIndex + 1)
+                                    .firstOrNull { candidate -> candidate.role == "user" }
+                                    ?.content
+                            }
+                            prompt?.let(viewModel::sendMessage)
+                        },
+                    )
                 }
             }
 
-            if (!isPremium) {
+            if (!isPremium && canRequestAds) {
                 BannerAdView(
                     modifier = Modifier
                         .padding(horizontal = 14.dp, vertical = 4.dp)
@@ -386,6 +422,75 @@ fun MainScreen(
             }
         }
     }
+
+    reportMessage?.let { response ->
+        val responseIndex = messages.indexOf(response)
+        val precedingPrompt = messages
+            .drop((responseIndex + 1).coerceAtLeast(0))
+            .firstOrNull { it.role == "user" }
+            ?.content
+        QualityFeedbackDialog(
+            onDismiss = { reportMessage = null },
+            onSubmit = { category, shareContent ->
+                viewModel.submitQualityFeedback(response, precedingPrompt, category, shareContent)
+                reportMessage = null
+            },
+        )
+    }
+}
+
+@Composable
+private fun QualityFeedbackDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (category: String, shareContent: Boolean) -> Unit,
+) {
+    val categories = listOf(
+        "incorrect" to "Incorrect",
+        "outdated" to "Out of date",
+        "unsafe" to "Unsafe",
+        "did_not_follow_request" to "Did not follow my request",
+        "poor_translation" to "Poor translation",
+        "other" to "Other",
+    )
+    var category by remember { mutableStateOf(categories.first().first) }
+    var shareContent by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Report this response") },
+        text = {
+            Column {
+                Text(
+                    "Choose what went wrong. By default, Aria sends only this category, app version, language, and response length to the developer's Cloudflare service.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(8.dp))
+                categories.forEach { (value, label) ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = category == value, onClick = { category = value })
+                        Text(label)
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = shareContent, onCheckedChange = { shareContent = it })
+                    Text("Include my prompt and Aria's response")
+                }
+                if (shareContent) {
+                    Text(
+                        "The conversation text will be sent to Cloudflare and stored for the developer to review. Remove sensitive information before sharing.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AuroraAmber,
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSubmit(category, shareContent) }) { Text("Send report") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }
 
 @Composable

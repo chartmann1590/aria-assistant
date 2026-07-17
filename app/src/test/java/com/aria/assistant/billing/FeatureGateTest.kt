@@ -1,5 +1,6 @@
 package com.aria.assistant.billing
 
+import com.aria.assistant.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -56,8 +57,8 @@ class FeatureGateTest {
         featureGate = FeatureGate(billingManager)
 
         assertTrue(featureGate.isAllowed("make_call"))
-        assertTrue(featureGate.isAllowed("send_sms"))
-        assertTrue(featureGate.isAllowed("read_screen"))
+        assertEquals(BuildConfig.ENABLE_RESTRICTED_MESSAGING, featureGate.isAllowed("send_sms"))
+        assertEquals(BuildConfig.ENABLE_ACCESSIBILITY_AUTOMATION, featureGate.isAllowed("read_screen"))
     }
 
     @Test
@@ -110,15 +111,24 @@ class FeatureGateTest {
     }
 
     @Test
+    fun `every tool literal is owned by only one feature gate`() {
+        val allToolNames = Feature.entries.flatMap { it.toolNames }
+        assertEquals(allToolNames.size, allToolNames.toSet().size)
+        allToolNames.forEach { name ->
+            assertEquals(name, Feature.featureForTool(name)?.toolNames?.first { it == name })
+        }
+    }
+
+    @Test
     fun `premiumFeatures lists only premium features`() {
         val all = featureGate.premiumFeatures
         assertTrue(all.contains(Feature.PHONE_CALLS))
-        assertTrue(all.contains(Feature.SMS_SEND))
+        assertEquals(BuildConfig.ENABLE_RESTRICTED_MESSAGING, all.contains(Feature.SMS_SEND))
         assertTrue(all.contains(Feature.SETTINGS_CONTROL))
         assertTrue(all.contains(Feature.CALENDAR_WRITE))
         assertTrue(all.contains(Feature.NOTIFICATIONS_READ_REPLY))
         assertTrue(all.contains(Feature.CAMERA))
-        assertTrue(all.contains(Feature.SCREEN_CONTROL))
+        assertEquals(BuildConfig.ENABLE_ACCESSIBILITY_AUTOMATION, all.contains(Feature.SCREEN_CONTROL))
         assertTrue(all.contains(Feature.PREMIUM_VOICES))
         assertTrue(all.contains(Feature.GEMMA_E4B))
         assertFalse(all.contains(Feature.TIMER_ALARM))

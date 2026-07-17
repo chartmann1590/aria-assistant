@@ -1,9 +1,12 @@
 package com.aria.assistant.skill
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.net.Uri
+import androidx.core.content.ContextCompat
 import com.aria.assistant.permission.PermissionManager
 import com.aria.assistant.permission.PhoneCapability
 import com.aria.assistant.permission.PermissionResult
@@ -23,6 +26,18 @@ class LocationSkill @Inject constructor(
     suspend fun currentLocation(): SkillResult<String> = kotlinx.coroutines.suspendCancellableCoroutine { cont ->
         val perm = permissionManager.ensure(PhoneCapability.LOCATION)
         if (perm is PermissionResult.Denied) {
+            cont.resume(SkillResult.NeedsPermission(PhoneCapability.LOCATION))
+            return@suspendCancellableCoroutine
+        }
+        val hasFineLocation = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val hasCoarseLocation = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!hasFineLocation && !hasCoarseLocation) {
             cont.resume(SkillResult.NeedsPermission(PhoneCapability.LOCATION))
             return@suspendCancellableCoroutine
         }

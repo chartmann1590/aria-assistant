@@ -6,7 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.PowerManager
 import android.provider.Settings
-import android.net.Uri
+import com.aria.assistant.BuildConfig
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -31,14 +31,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedButton
+import com.aria.assistant.translation.TranslatedText as Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -64,6 +68,8 @@ import com.aria.assistant.presentation.ui.theme.TextSecondary
 import com.aria.assistant.presentation.viewmodel.OnboardingDownloadState
 import com.aria.assistant.presentation.viewmodel.OnboardingViewModel
 import com.aria.assistant.service.AriaForegroundService
+import com.aria.assistant.translation.TranslationStatus
+import com.aria.assistant.translation.UiTranslationManager
 
 private fun formatBytes(bytes: Long): String {
     return when {
@@ -82,7 +88,10 @@ fun OnboardingScreen(
 ) {
     val context = LocalContext.current
     var step by rememberSaveable { mutableIntStateOf(1) }
+    var languageMenuExpanded by rememberSaveable { mutableStateOf(false) }
     val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
+    val voiceConfig by viewModel.voiceConfig.collectAsStateWithLifecycle()
+    val translationStatus by viewModel.translationStatus.collectAsStateWithLifecycle()
 
     val micPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -134,7 +143,7 @@ fun OnboardingScreen(
             when (step) {
                 1 -> {
                     AriaOrb(state = AriaState.IDLE)
-                    Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     Text(
                         text = "Meet Aria",
                         style = MaterialTheme.typography.headlineLarge,
@@ -148,13 +157,85 @@ fun OnboardingScreen(
                         color = TextSecondary,
                         textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        InfoChip("Private", AuroraViolet)
-                        InfoChip("Offline", AuroraTeal)
+                    Spacer(modifier = Modifier.height(18.dp))
+                    GlassCard(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "Choose your language",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Box {
+                                val selectedLanguage = viewModel.supportedUiLanguages.firstOrNull {
+                                    it.tag == voiceConfig.uiLanguage
+                                } ?: viewModel.supportedUiLanguages.first()
+                                OutlinedButton(onClick = { languageMenuExpanded = true }) {
+                                    Text(selectedLanguage.nativeName, translate = false)
+                                }
+                                DropdownMenu(
+                                    expanded = languageMenuExpanded,
+                                    onDismissRequest = { languageMenuExpanded = false }
+                                ) {
+                                    viewModel.supportedUiLanguages.forEach { language ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Text(
+                                                    if (language.nativeName.equals(language.englishName, ignoreCase = true)) {
+                                                        language.nativeName
+                                                    } else {
+                                                        "${language.nativeName} (${language.englishName})"
+                                                    },
+                                                    translate = false
+                                                )
+                                            },
+                                            onClick = {
+                                                languageMenuExpanded = false
+                                                viewModel.updateUiLanguage(language.tag)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                            when (val status = translationStatus) {
+                                is TranslationStatus.Downloading -> Text(
+                                    "Downloading the language model…",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = AuroraViolet
+                                )
+                                is TranslationStatus.Error -> Text(
+                                    "Language download failed: ${status.message}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color(0xFFEF4444),
+                                    textAlign = TextAlign.Center,
+                                    translate = false
+                                )
+                                TranslationStatus.Ready -> if (voiceConfig.uiLanguage != UiTranslationManager.ENGLISH) {
+                                    Text(
+                                        "Ready for offline translation",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = AuroraTeal
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "Translations are generated on-device and may be inaccurate. You can change the app language anytime in Settings.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
-                    Spacer(modifier = Modifier.height(32.dp))
-                    NebulaButton("Get Started", onClick = { step = 2 })
+                    Spacer(modifier = Modifier.height(18.dp))
+                    NebulaButton(
+                        "Get Started",
+                        enabled = translationStatus !is TranslationStatus.Downloading,
+                        onClick = { step = 2 }
+                    )
                 }
 
                 2 -> {
@@ -284,9 +365,7 @@ fun OnboardingScreen(
                         val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
                         if (!pm.isIgnoringBatteryOptimizations(context.packageName)) {
                             batteryOptLauncher.launch(
-                                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                    data = Uri.parse("package:${context.packageName}")
-                                }
+                                Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                             )
                         } else { step = 5 }
                     })
@@ -298,7 +377,11 @@ fun OnboardingScreen(
                     Text("Permissions", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, textAlign = TextAlign.Center)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        "Aria needs access to a few phone features for calling, messaging, and settings control.",
+                        if (BuildConfig.ENABLE_RESTRICTED_MESSAGING) {
+                            "Aria needs access to a few phone features for calling, messaging, and settings control."
+                        } else {
+                            "Aria needs access to a few phone features for calling and device controls. You choose each permission."
+                        },
                         style = MaterialTheme.typography.bodyMedium, color = TextSecondary, textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(24.dp))
@@ -339,9 +422,10 @@ fun OnboardingScreen(
 }
 
 @Composable
-private fun NebulaButton(text: String, onClick: () -> Unit) {
+private fun NebulaButton(text: String, enabled: Boolean = true, onClick: () -> Unit) {
     Button(
         onClick = onClick,
+        enabled = enabled,
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(999.dp)),

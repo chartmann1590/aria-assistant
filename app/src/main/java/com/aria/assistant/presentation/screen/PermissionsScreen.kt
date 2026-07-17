@@ -1,5 +1,6 @@
 package com.aria.assistant.presentation.screen
 
+import com.aria.assistant.BuildConfig
 import android.Manifest
 import android.content.Intent
 import android.provider.Settings
@@ -36,7 +37,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import com.aria.assistant.translation.TranslatedText as Text
+import com.aria.assistant.translation.translatedUiText
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -88,7 +90,7 @@ fun PermissionsScreen(
         AlertDialog(
             onDismissRequest = { showServiceDialog = null },
             title = { Text(cap.title, color = TextPrimary) },
-            text = { Text(cap.rationale, color = TextSecondary) },
+            text = { Text(serviceDisclosure(cap), color = TextSecondary) },
             containerColor = Color(0xFF12122A),
             titleContentColor = TextPrimary,
             confirmButton = {
@@ -99,11 +101,11 @@ fun PermissionsScreen(
                         specialLauncher.launch(intent)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = AuroraViolet)
-                ) { Text("Open Settings", color = Color.White) }
+                ) { Text("I Agree & Open Settings", color = Color.White) }
             },
             dismissButton = {
                 TextButton(onClick = { showServiceDialog = null }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text("Not Now", color = TextSecondary)
                 }
             }
         )
@@ -130,7 +132,7 @@ fun PermissionsScreen(
                         .background(Color.White.copy(alpha = 0.06f), CircleShape)
                         .border(0.5.dp, Color.White.copy(alpha = 0.08f), CircleShape)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary, modifier = Modifier.size(20.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = translatedUiText("Back"), tint = TextPrimary, modifier = Modifier.size(20.dp))
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text("Permissions", style = MaterialTheme.typography.titleLarge, color = TextPrimary)
@@ -151,7 +153,11 @@ fun PermissionsScreen(
                     )
                 }
 
-                val runtimeCaps = PhoneCapability.entries.filter { it.kind == PhoneCapability.PermKind.RUNTIME }
+                val runtimeCaps = PhoneCapability.entries.filter {
+                    it.kind == PhoneCapability.PermKind.RUNTIME &&
+                        (BuildConfig.ENABLE_RESTRICTED_MESSAGING ||
+                            (it != PhoneCapability.SMS && it != PhoneCapability.READ_SMS))
+                }
                 item {
                     GlassCard(modifier = Modifier.fillMaxWidth()) {
                         Column {
@@ -179,7 +185,10 @@ fun PermissionsScreen(
                     )
                 }
 
-                val specialCaps = PhoneCapability.entries.filter { it.kind == PhoneCapability.PermKind.SPECIAL }
+                val specialCaps = PhoneCapability.entries.filter {
+                    it.kind == PhoneCapability.PermKind.SPECIAL &&
+                        (BuildConfig.ENABLE_ACCESSIBILITY_AUTOMATION || it != PhoneCapability.ACCESSIBILITY)
+                }
                 item {
                     GlassCard(modifier = Modifier.fillMaxWidth()) {
                         Column {
@@ -205,6 +214,22 @@ fun PermissionsScreen(
             }
         }
     }
+}
+
+private fun serviceDisclosure(capability: PhoneCapability): String = when (capability) {
+    PhoneCapability.ACCESSIBILITY ->
+        "Aria uses Android Accessibility Service to read text visible on your screen and " +
+            "perform only the taps or scrolls you explicitly request. Screen content is " +
+            "processed on your device and is not shared with advertisers, Cloudflare, or " +
+            "Aria's developer. This optional access is never used to act without your request."
+    PhoneCapability.NOTIFICATION_LISTENER ->
+        "Aria uses notification access to read, dismiss, and reply to notifications only " +
+            "when you ask. Notification content is processed on your device and is not " +
+            "shared with advertisers, Cloudflare, or Aria's developer."
+    PhoneCapability.USAGE_ACCESS ->
+        "Aria uses app-usage access to identify the foreground app when you request " +
+            "context-aware help. This information stays on your device and is not shared."
+    else -> capability.rationale
 }
 
 @Composable

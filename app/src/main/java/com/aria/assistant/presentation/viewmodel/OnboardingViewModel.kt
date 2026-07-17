@@ -4,13 +4,16 @@ import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
 import android.provider.Settings
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.aria.assistant.domain.model.VoiceConfig
 import com.aria.assistant.domain.repository.SettingsRepository
 import com.aria.assistant.engine.AriaLogger
 import com.aria.assistant.engine.LlmEngine
 import com.aria.assistant.engine.ModelDownloadManager
+import com.aria.assistant.translation.TranslationStatus
+import com.aria.assistant.translation.UiLanguage
+import com.aria.assistant.translation.UiTranslationManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,11 +35,17 @@ data class OnboardingDownloadState(
 class OnboardingViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val downloadManager: ModelDownloadManager,
-    private val llmEngine: LlmEngine
+    private val llmEngine: LlmEngine,
+    private val translationManager: UiTranslationManager
 ) : ViewModel() {
 
     private val _downloadState = MutableStateFlow(OnboardingDownloadState())
     val downloadState: StateFlow<OnboardingDownloadState> = _downloadState.asStateFlow()
+
+    private val _voiceConfig = MutableStateFlow(VoiceConfig())
+    val voiceConfig: StateFlow<VoiceConfig> = _voiceConfig.asStateFlow()
+    val supportedUiLanguages: List<UiLanguage> = translationManager.supportedLanguages
+    val translationStatus: StateFlow<TranslationStatus> = translationManager.status
 
     companion object {
         private const val MODEL_E2B_URL = "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm"
@@ -51,6 +60,9 @@ class OnboardingViewModel @Inject constructor(
     }
 
     init {
+        viewModelScope.launch {
+            settingsRepository.getVoiceConfig().collect { _voiceConfig.value = it }
+        }
         viewModelScope.launch {
             downloadManager.state.collect { state ->
                 when (state) {
@@ -114,13 +126,25 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
+    fun updateUiLanguage(languageTag: String) {
+        if (_voiceConfig.value.uiLanguage == languageTag) return
+        viewModelScope.launch {
+            try {
+                translationManager.prepareLanguage(languageTag)
+                settingsRepository.updateVoiceConfig(
+                    _voiceConfig.value.copy(uiLanguage = languageTag)
+                )
+            } catch (_: Exception) {
+                // The download error is exposed through translationStatus for the UI.
+            }
+        }
+    }
+
     fun requestBatteryOptimizationExemption(context: Context) {
         val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         if (!pm.isIgnoringBatteryOptimizations(context.packageName)) {
             context.startActivity(
-                Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                    data = Uri.parse("package:${context.packageName}")
-                }
+                Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
             )
         }
     }

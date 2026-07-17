@@ -24,7 +24,6 @@ jobs:
       - name: Build with Gradle
         run: |
           ./gradlew assembleDebug \
-            -Pgithub.api.token=${{ secrets.GH_API_TOKEN }} \
             -Pgithub.repo.owner=${{ secrets.GH_REPO_OWNER }} \
             -Pgithub.repo.name=${{ secrets.GH_REPO_NAME }} \
             -Padmob.app.id=${{ secrets.ADMOB_APP_ID }} \

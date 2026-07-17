@@ -11,7 +11,8 @@ import java.util.concurrent.TimeUnit
 
 object GithubClient {
 
-    private const val BASE_URL = "https://api.github.com/"
+    private val baseUrl: String
+        get() = BuildConfig.GITHUB_PROXY_URL.ifBlank { "https://api.github.com/" }
     private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
 
     private val json = Json {
@@ -20,7 +21,7 @@ object GithubClient {
     }
 
     val isConfigured: Boolean
-        get() = BuildConfig.GITHUB_API_TOKEN.isNotBlank()
+        get() = (BuildConfig.GITHUB_PROXY_URL.isNotBlank() || BuildConfig.GITHUB_API_TOKEN.isNotBlank())
                 && BuildConfig.GITHUB_REPO_OWNER.isNotBlank()
                 && BuildConfig.GITHUB_REPO_NAME.isNotBlank()
 
@@ -59,7 +60,7 @@ object GithubClient {
 
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(baseUrl)
             .client(okHttpClient)
             .addConverterFactory(json.asConverterFactory(jsonMediaType))
             .build()

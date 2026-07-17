@@ -6,6 +6,10 @@ app/build/
 local.properties
 keystore.properties
 *.jks
+app/google-services.json
+app/src/debug/google-services.json
+app/src/release/google-services.json
+.wrangler/
 *.iml
 .idea/
 .DS_Store

@@ -10,6 +10,8 @@ import androidx.lifecycle.viewModelScope
 import com.aria.assistant.ads.AdManager
 import com.aria.assistant.billing.FeatureGate
 import com.aria.assistant.data.model.ConversationMessage
+import com.aria.assistant.data.quality.QualityFeedback
+import com.aria.assistant.data.quality.QualityFeedbackClient
 import com.aria.assistant.domain.model.AriaState
 import com.aria.assistant.domain.repository.ConversationRepository
 import com.aria.assistant.engine.AriaLogger
@@ -49,12 +51,14 @@ class MainViewModel @Inject constructor(
     private val serviceController: AriaServiceController,
     private val stateManager: AriaStateManager,
     private val adManager: AdManager,
-    private val featureGate: FeatureGate
+    private val featureGate: FeatureGate,
+    private val qualityFeedbackClient: QualityFeedbackClient,
 ) : ViewModel() {
 
     val ariaState: StateFlow<AriaState> = stateManager.state
 
     val isPremium: StateFlow<Boolean> = featureGate.isPremium
+    val canRequestAds: StateFlow<Boolean> = adManager.canRequestAds
     val showInterstitialEvents: SharedFlow<Unit> = adManager.showInterstitialEvents
 
     fun recordAdInteraction() {
@@ -63,6 +67,10 @@ class MainViewModel @Inject constructor(
 
     fun showInterstitial(activity: Activity) {
         adManager.showInterstitial(activity)
+    }
+
+    fun requestAdConsent(activity: Activity) {
+        adManager.requestConsent(activity)
     }
 
     private val _messages = MutableStateFlow<List<ConversationMessage>>(emptyList())
@@ -74,6 +82,9 @@ class MainViewModel @Inject constructor(
     private val _streamingText = MutableStateFlow("")
     val streamingText: StateFlow<String> = _streamingText.asStateFlow()
     val verificationActivity: StateFlow<String?> = intentRouter.verificationActivity
+
+    private val _qualityFeedbackStatus = MutableStateFlow<String?>(null)
+    val qualityFeedbackStatus: StateFlow<String?> = _qualityFeedbackStatus.asStateFlow()
 
     private val _downloadInfo = MutableStateFlow(DownloadInfo())
     val downloadInfo: StateFlow<DownloadInfo> = _downloadInfo.asStateFlow()
@@ -264,6 +275,33 @@ class MainViewModel @Inject constructor(
                 stateManager.setState(newState)
             }
         }
+    }
+
+    fun submitQualityFeedback(
+        response: ConversationMessage,
+        prompt: String?,
+        category: String,
+        shareContent: Boolean,
+    ) {
+        viewModelScope.launch {
+            val result = qualityFeedbackClient.submit(
+                QualityFeedback(
+                    category = category,
+                    response = response.content,
+                    prompt = prompt,
+                    shareContent = shareContent,
+                )
+            )
+            _qualityFeedbackStatus.value = if (result.isSuccess) {
+                "Thanks — your report was sent."
+            } else {
+                "The report could not be sent. Please try again later."
+            }
+        }
+    }
+
+    fun clearQualityFeedbackStatus() {
+        _qualityFeedbackStatus.value = null
     }
 
     fun toggleMute() {

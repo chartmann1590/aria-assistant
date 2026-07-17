@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.aria.assistant.domain.model.VoiceConfig
 import com.aria.assistant.domain.repository.SettingsRepository
+import com.aria.assistant.web.WebVerificationMode
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -29,6 +30,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val TTS_SPEED = floatPreferencesKey("tts_speed")
         val TTS_PITCH = floatPreferencesKey("tts_pitch")
         val LANGUAGE = stringPreferencesKey("language")
+        val UI_LANGUAGE = stringPreferencesKey("ui_language")
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
         val PREMIUM_ENABLED = booleanPreferencesKey("premium_enabled")
         val SELECTED_VOICE = stringPreferencesKey("selected_voice")
@@ -36,6 +38,7 @@ class SettingsRepositoryImpl @Inject constructor(
         val TEMPERATURE_UNIT = stringPreferencesKey("temperature_unit")
         val PRIVACY_MODE = booleanPreferencesKey("privacy_mode")
         val SELECTED_MODEL = stringPreferencesKey("selected_model")
+        val WEB_VERIFICATION_MODE = stringPreferencesKey("web_verification_mode")
     }
 
     override fun getVoiceConfig(): Flow<VoiceConfig> = context.dataStore.data.map { prefs ->
@@ -45,10 +48,12 @@ class SettingsRepositoryImpl @Inject constructor(
             ttsSpeed = prefs[Keys.TTS_SPEED] ?: 1.0f,
             ttsPitch = prefs[Keys.TTS_PITCH] ?: 1.0f,
             language = prefs[Keys.LANGUAGE] ?: "en-US",
+            uiLanguage = prefs[Keys.UI_LANGUAGE] ?: "en",
             selectedVoice = prefs[Keys.SELECTED_VOICE] ?: "en_US-amy-medium",
             temperatureUnit = prefs[Keys.TEMPERATURE_UNIT] ?: "celsius",
             privacyMode = prefs[Keys.PRIVACY_MODE] ?: false,
-            selectedModel = prefs[Keys.SELECTED_MODEL] ?: "E2B"
+            selectedModel = prefs[Keys.SELECTED_MODEL] ?: "E2B",
+            webVerificationMode = WebVerificationMode.fromStored(prefs[Keys.WEB_VERIFICATION_MODE])
         )
     }
 
@@ -59,10 +64,12 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs[Keys.TTS_SPEED] = config.ttsSpeed
             prefs[Keys.TTS_PITCH] = config.ttsPitch
             prefs[Keys.LANGUAGE] = config.language
+            prefs[Keys.UI_LANGUAGE] = config.uiLanguage
             prefs[Keys.SELECTED_VOICE] = config.selectedVoice
             prefs[Keys.TEMPERATURE_UNIT] = config.temperatureUnit
             prefs[Keys.PRIVACY_MODE] = config.privacyMode
             prefs[Keys.SELECTED_MODEL] = config.selectedModel
+            prefs[Keys.WEB_VERIFICATION_MODE] = config.webVerificationMode.name
         }
     }
 

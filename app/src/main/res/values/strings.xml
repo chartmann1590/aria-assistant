@@ -4,7 +4,7 @@
     <string name="channel_name">Aria Voice Service</string>
     <string name="channel_description">Foreground service for always-on voice assistant</string>
     <string name="battery_opt_title">Background Access Needed</string>
-    <string name="battery_opt_message">Aria needs to stay awake in the background to listen for your wake word. This uses about 2-5% extra battery.</string>
+    <string name="battery_opt_message">Aria needs to stay awake in the background to listen for your wake word. This uses about 2-5%% extra battery.</string>
     <string name="battery_opt_allow">Allow</string>
     <string name="battery_opt_skip">Skip</string>
     <string name="voic_section_title">Voice</string>

@@ -23,7 +23,7 @@ import com.aria.assistant.skill.ScreenControlSkill
 import com.aria.assistant.skill.SettingsSkill
 import com.aria.assistant.skill.TimerSkill
 import com.aria.assistant.skill.UnitConversionSkill
-import com.aria.assistant.skill.WebSearchSkill
+import com.aria.assistant.web.WebResearchService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.json.JSONObject
 import javax.inject.Inject
@@ -59,14 +59,17 @@ class SetAlarmTool @Inject constructor(
 
 @Singleton
 class WebSearchTool @Inject constructor(
-    private val webSearchSkill: WebSearchSkill
+    private val webResearchService: WebResearchService
 ) : Tool {
     override val name = "web_search"
     override val description = "Search the internet for current information"
     override val paramSchema = """{"query": "weather in London"}"""
     override val requiresPremium = false
     override suspend fun execute(params: JSONObject): ToolResult {
-        return ToolResult.fromSkillResult(webSearchSkill.search(params.optString("query", "")))
+        val query = params.optString("query", "")
+        if (query.isBlank()) return ToolResult.Failure("Please provide a web search query")
+        val result = webResearchService.research(query)
+        return ToolResult.Success(result.toPromptEvidence(), result)
     }
 }
 

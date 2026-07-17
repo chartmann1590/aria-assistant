@@ -57,8 +57,6 @@ class FeedbackViewModel @Inject constructor(
 
     val configError: String?
         get() = when {
-            BuildConfig.GITHUB_API_TOKEN.isBlank() ->
-                "GitHub API token not configured. Add github.api.token to local.properties."
             BuildConfig.GITHUB_REPO_OWNER.isBlank() || BuildConfig.GITHUB_REPO_NAME.isBlank() ->
                 "GitHub repository not configured. Add github.repo.owner and github.repo.name to local.properties."
             else -> null

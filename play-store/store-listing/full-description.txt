@@ -1,0 +1,38 @@
+Aria is a privacy-focused voice assistant that runs its core AI on your Android device. Speech recognition, language-model inference, wake-word detection, voice synthesis, and downloaded-language translation happen locally.
+
+Ask naturally
+
+Talk or type to Aria for everyday questions and device tasks. Aria can set timers and alarms, launch apps, control media, check device information, compose messages, help with navigation, and more. Android permissions are requested only when a feature needs them.
+
+Current answers with visible sources
+
+For questions that need fresh information, Aria can research the public web. Choose in Settings whether web verification runs for current facts, all factual questions, or only when you explicitly ask. Source cards and an expandable verification trace show how an answer was checked. Web requests require internet access and send the search query and requested public page URLs to search/content providers.
+
+On-device language translation
+
+Choose your interface language during onboarding or later in Settings. Aria downloads the selected Google ML Kit translation model, then translates menus locally without a cloud translation dependency. Machine translation can be inaccurate, and you can change languages at any time.
+
+Voice stays local
+
+Wake-word audio and speech transcription are processed on your device. Aria does not upload voice recordings or use a cloud LLM for its core assistant. Conversation history is stored locally unless you explicitly choose to include conversation text in a quality or support report.
+
+You control sensitive capabilities
+
+Optional Notification Access supports user-directed notification features. It is off by default, requires a manual Android Settings grant, and is used only for actions you request. Phone, contacts, calendar, camera, and location permissions are also optional and feature-specific. The Google Play build does not include an AccessibilityService or restricted SMS/Call Log permissions.
+
+Free and Premium
+
+Core conversation, on-device AI, web verification, interface translation, timers, alarms, app launching, media control, and other everyday tools are available without Premium. Premium adds advanced device actions, additional voices, an enhanced model option, and removes ads. Free users may see Google AdMob ads after the applicable consent flow.
+
+Transparent diagnostics and feedback
+
+Firebase Analytics, Crashlytics, and Performance Monitoring collect app-use and technical diagnostics to improve reliability. They are not intentionally sent voice recordings or conversation text. A response-quality report sends only a category, app version, language, and response length by default; prompt/response text is included only after you explicitly opt in. Settings also contains an optional GitHub issue reporter where you choose the report contents and attachments.
+
+Requirements
+
+• Android 8.0 or newer
+• 4 GB RAM minimum; 8 GB recommended
+• Several gigabytes of free storage for downloadable AI and language models
+• Internet connection for initial model downloads, web verification, ads, billing, diagnostics, and optional reports
+
+Aria is open source under the Apache 2.0 license. Review the source, report issues, and contribute at github.com/chartmann1590/aria-assistant.

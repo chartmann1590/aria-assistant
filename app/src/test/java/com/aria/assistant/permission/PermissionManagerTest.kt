@@ -85,9 +85,9 @@ class PermissionManagerTest {
     }
 
     @Test
-    fun `requestIntent BATTERY_OPT returns ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`() {
+    fun `requestIntent BATTERY_OPT opens standard battery optimization settings`() {
         val intent = permissionManager.requestIntent(PhoneCapability.BATTERY_OPT)
-        assertEquals(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, intent.action)
+        assertEquals(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS, intent.action)
     }
 
     @Test

@@ -15,6 +15,8 @@ import com.aria.assistant.domain.repository.SettingsRepository
 import com.aria.assistant.engine.AriaLogger
 import com.aria.assistant.presentation.screen.AriaNavHost
 import com.aria.assistant.presentation.ui.theme.AriaTheme
+import com.aria.assistant.translation.UiTranslationManager
+import com.aria.assistant.translation.UiTranslationProvider
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -27,6 +29,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    @Inject
+    lateinit var translationManager: UiTranslationManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -34,11 +39,16 @@ class MainActivity : ComponentActivity() {
         billingManager.checkExistingPurchases()
         setContent {
             val onboardingComplete by settingsRepository.isOnboardingComplete().collectAsStateWithLifecycle(initialValue = false)
+            val voiceConfig by settingsRepository.getVoiceConfig().collectAsStateWithLifecycle(
+                initialValue = com.aria.assistant.domain.model.VoiceConfig()
+            )
             val startDest = if (onboardingComplete) "main" else "onboarding"
-            AriaTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    val navController = rememberNavController()
-                    AriaNavHost(navController = navController, startDestination = startDest)
+            UiTranslationProvider(voiceConfig.uiLanguage, translationManager) {
+                AriaTheme {
+                    Surface(modifier = Modifier.fillMaxSize()) {
+                        val navController = rememberNavController()
+                        AriaNavHost(navController = navController, startDestination = startDest)
+                    }
                 }
             }
         }

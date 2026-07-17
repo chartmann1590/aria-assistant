@@ -1,0 +1,60 @@
+name: Monitor AI quality trends
+
+on:
+  schedule:
+    - cron: "23 13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  trends:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch aggregate quality trends
+        env:
+          ENDPOINT: ${{ secrets.CLOUDFLARE_QUALITY_FEEDBACK_URL }}
+          ADMIN_TOKEN: ${{ secrets.CLOUDFLARE_QUALITY_FEEDBACK_ADMIN_TOKEN }}
+        run: |
+          test -n "$ENDPOINT" || { echo "Missing CLOUDFLARE_QUALITY_FEEDBACK_URL"; exit 1; }
+          test -n "$ADMIN_TOKEN" || { echo "Missing CLOUDFLARE_QUALITY_FEEDBACK_ADMIN_TOKEN"; exit 1; }
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $ADMIN_TOKEN" \
+            "$ENDPOINT/v1/trends?days=7" > trends.json
+          jq -e '.total >= 0 and (.categories | type == "array")' trends.json >/dev/null
+
+      - name: Build owner report
+        run: |
+          total="$(jq -r '.total' trends.json)"
+          {
+            echo '## Aria AI quality trends'
+            echo
+            echo "Reports in the last 7 days: **$total**"
+            echo
+            echo '| Category | Reports |'
+            echo '|---|---:|'
+            jq -r '.categories[] | "| \(.category) | \(.count) |"' trends.json
+            echo
+            echo '| App version | Reports |'
+            echo '|---|---:|'
+            jq -r '.versions[] | "| \(.version) | \(.count) |"' trends.json
+            echo
+            echo "Reports that explicitly included prompt/response text: **$(jq -r '.sharedContentReports' trends.json)**"
+            echo
+            echo "Generated: $(jq -r '.generatedAt' trends.json)"
+          } > report.md
+
+      - name: Create or update trend issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create feedback --color 7C3AED --description "AI quality feedback trends" --force
+          title='[Aria Quality Trends] Rolling 7-day report'
+          issue="$(gh issue list --state open --search "$title in:title" --json number --jq '.[0].number // empty')"
+          if [ -n "$issue" ]; then
+            gh issue edit "$issue" --body-file report.md
+          else
+            gh issue create --title "$title" --body-file report.md --label feedback
+          fi

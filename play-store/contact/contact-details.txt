@@ -1,0 +1,5 @@
+Developer: Charles Hartmann
+Support email: charles.h.hartmann1@gmail.com
+Website: https://chartmann1590.github.io/aria-assistant/
+Privacy policy: https://chartmann1590.github.io/aria-assistant/privacy.html
+Source and support: https://github.com/chartmann1590/aria-assistant

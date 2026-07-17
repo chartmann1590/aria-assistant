@@ -31,7 +31,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import com.aria.assistant.translation.TranslatedText as Text
+import com.aria.assistant.translation.translatedUiText
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -58,6 +59,8 @@ import com.aria.assistant.presentation.ui.theme.TextPrimary
 import com.aria.assistant.presentation.ui.theme.TextSecondary
 import com.aria.assistant.presentation.ui.theme.TextTertiary
 import com.aria.assistant.presentation.viewmodel.PremiumViewModel
+import com.aria.assistant.BuildConfig
+import com.aria.assistant.billing.BillingManager
 
 private data class FeatureRow(val label: String, val free: Boolean, val premium: Boolean)
 
@@ -87,7 +90,13 @@ private val features = listOf(
     FeatureRow("Nearby search & reverse geocode", true, true),
     FeatureRow("Share to WhatsApp & Telegram", true, true),
     FeatureRow("Storage info & diagnostics", true, true),
-)
+).filterNot { row ->
+    (!BuildConfig.ENABLE_ACCESSIBILITY_AUTOMATION && row.label.startsWith("Screen control")) ||
+        (!BuildConfig.ENABLE_RESTRICTED_MESSAGING && (
+            row.label.contains("SMS") || row.label == "Call history" ||
+                row.label.startsWith("Answer & reject")
+        ))
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,6 +105,7 @@ fun PremiumScreen(
     onBack: () -> Unit = {},
 ) {
     val isPremium by viewModel.isPremium.collectAsStateWithLifecycle()
+    val formattedPrices by viewModel.formattedPrices.collectAsStateWithLifecycle()
     val activity = LocalContext.current as? android.app.Activity
 
     if (isPremium) {
@@ -126,7 +136,7 @@ fun PremiumScreen(
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = translatedUiText("Back"),
                         tint = TextPrimary,
                         modifier = Modifier.size(20.dp)
                     )
@@ -281,11 +291,11 @@ fun PremiumScreen(
                         ) {
                             Text("Monthly", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
                             Spacer(modifier = Modifier.height(6.dp))
-                            Text("$2.99", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
+                            Text(formattedPrices[BillingManager.MONTHLY_PRODUCT_ID] ?: "See price", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
                             Text("/month", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                             Spacer(modifier = Modifier.height(14.dp))
                             Button(
-                                onClick = { activity?.let { viewModel.subscribe("aria_premium_monthly", it) } },
+                                onClick = { activity?.let { viewModel.subscribe(BillingManager.MONTHLY_PRODUCT_ID, it) } },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(999.dp)),
@@ -335,11 +345,11 @@ fun PremiumScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                             Text("Yearly", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
                             Spacer(modifier = Modifier.height(6.dp))
-                            Text("$19.99", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
+                            Text(formattedPrices[BillingManager.YEARLY_PRODUCT_ID] ?: "See price", style = MaterialTheme.typography.headlineMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
                             Text("/year", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(
-                                onClick = { activity?.let { viewModel.subscribe("aria_premium_yearly", it) } },
+                                onClick = { activity?.let { viewModel.subscribe(BillingManager.YEARLY_PRODUCT_ID, it) } },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(999.dp)),
@@ -399,7 +409,7 @@ private fun PremiumActiveScreen(onBack: () -> Unit) {
                         .background(Color.White.copy(alpha = 0.06f), CircleShape)
                         .border(0.5.dp, Color.White.copy(alpha = 0.08f), CircleShape)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimary, modifier = Modifier.size(20.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = translatedUiText("Back"), tint = TextPrimary, modifier = Modifier.size(20.dp))
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text("Premium", style = MaterialTheme.typography.titleLarge, color = TextPrimary)

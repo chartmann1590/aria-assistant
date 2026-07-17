@@ -4,9 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Aria — Your Private AI Assistant</title>
-<meta name="description" content="Aria is a fully on-device AI voice assistant for Android. No cloud. No tracking. 100% private." />
+<meta name="description" content="Aria is a private on-device AI voice assistant for Android with optional verified web research and offline UI translation." />
 <meta property="og:title" content="Aria — Your Private AI Assistant" />
-<meta property="og:description" content="Fully on-device AI. No cloud. No tracking. 100% private." />
+<meta property="og:description" content="On-device AI, verified web research, and offline UI translation." />
 <meta property="og:type" content="website" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -369,7 +369,7 @@ footer {
 <section class="hero">
   <div class="hero-eyebrow"><span></span> Now available on Android</div>
   <h1>AI that lives<br/><em>on your phone</em></h1>
-  <p>Aria is a fully on-device voice assistant powered by Gemma 4. No cloud. No tracking. Everything runs privately on your device.</p>
+  <p>Aria is a private voice assistant powered by Gemma 4 on your phone, with optional multi-source web verification and offline interface translation.</p>
   <div class="hero-actions">
     <a class="btn-primary" href="#download">Download Free</a>
     <a class="btn-ghost" href="#features">See features</a>
@@ -387,11 +387,11 @@ footer {
   <div class="container">
     <div class="privacy-banner">
       <div class="privacy-banner-inner">
-        <div class="privacy-stat"><div class="val">0</div><div class="lbl">Data sent to cloud</div></div>
+        <div class="privacy-stat"><div class="val">Local</div><div class="lbl">Voice &amp; AI inference</div></div>
         <div class="privacy-div"></div>
         <div class="privacy-stat"><div class="val">100%</div><div class="lbl">On-device inference</div></div>
         <div class="privacy-div"></div>
-        <div class="privacy-stat"><div class="val">0</div><div class="lbl">Third-party trackers</div></div>
+        <div class="privacy-stat"><div class="val">59</div><div class="lbl">UI languages</div></div>
         <div class="privacy-div"></div>
         <div class="privacy-stat"><div class="val">Open</div><div class="lbl">Source code</div></div>
       </div>
@@ -403,8 +403,8 @@ footer {
 <section class="features" id="features">
   <div class="container">
     <div class="section-label">What Aria can do</div>
-    <h2 class="section-title">A full assistant. Zero compromise.</h2>
-    <p class="section-sub">Everything a smart assistant should do — calls, messages, search, alarms, and more — without your data leaving your device.</p>
+    <h2 class="section-title">A full assistant, built around your phone.</h2>
+    <p class="section-sub">Calls, messages, verified research, alarms, translation, and more — while voice and AI inference stay on your device.</p>
     <div class="features-grid">
       <div class="feature-card">
         <div class="feat-icon feat-violet">🎙️</div>
@@ -428,8 +428,8 @@ footer {
       </div>
       <div class="feature-card">
         <div class="feat-icon feat-violet">🌐</div>
-        <h3>Web Search</h3>
-        <p>Aria can search the web and Wikipedia when you need current information — with results read back to you naturally.</p>
+        <h3>Verified Web Research</h3>
+        <p>Aria can search public sources for current facts, compare evidence, cite links, and show an expandable research trace.</p>
       </div>
       <div class="feature-card">
         <div class="feat-icon feat-teal">🗓️</div>
@@ -445,6 +445,16 @@ footer {
         <div class="feat-icon feat-magenta">⚙️</div>
         <h3>Settings Control</h3>
         <p>Dim the screen, toggle Wi-Fi, adjust volume — full system control via natural voice commands.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon feat-teal">🌍</div>
+        <h3>Offline Interface Translation</h3>
+        <p>Choose a language during onboarding or in Settings. ML Kit downloads the model once, then menus translate on-device without a cloud translation request.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feat-icon feat-violet">🐛</div>
+        <h3>GitHub Issue Reporter</h3>
+        <p>Report a problem from Settings, optionally attach diagnostics or a screenshot, track the issue, and reply to its thread.</p>
       </div>
     </div>
   </div>
@@ -549,7 +559,11 @@ footer {
       </details>
       <details>
         <summary>Does Aria work without an internet connection?</summary>
-        <div class="faq-body">Yes — all core features work fully offline once the model is downloaded. An internet connection is only needed for web search, Wikipedia lookups, and downloading additional voice packs.</div>
+        <div class="faq-body">Yes — voice, AI inference, and translated menus work offline after their models are downloaded. Internet is still used for current web research, model downloads, billing, Firebase technical telemetry, and issue reports you submit.</div>
+      </details>
+      <details>
+        <summary>What diagnostics does Aria collect?</summary>
+        <div class="faq-body">Firebase Analytics, Crashlytics, and Performance Monitoring collect app interaction and technical reliability/performance data. They do not receive your voice audio or conversation content. See the <a href="privacy.html">Privacy Policy</a> for details.</div>
       </details>
       <details>
         <summary>Why does Aria need accessibility permissions?</summary>

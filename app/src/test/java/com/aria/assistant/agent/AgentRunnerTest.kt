@@ -4,6 +4,8 @@ import com.aria.assistant.billing.BillingManager
 import com.aria.assistant.billing.FeatureGate
 import com.aria.assistant.domain.model.AriaState
 import com.aria.assistant.domain.repository.ConversationRepository
+import com.aria.assistant.domain.repository.SettingsRepository
+import com.aria.assistant.domain.model.VoiceConfig
 import com.aria.assistant.engine.AriaTTS
 import com.aria.assistant.engine.LlmEngine
 import com.aria.assistant.permission.PhoneCapability
@@ -21,6 +23,13 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import com.aria.assistant.web.WebResearchService
+import com.aria.assistant.web.WebVerificationPolicy
+import com.aria.assistant.web.VerificationStatus
+import com.aria.assistant.web.VerificationStep
+import com.aria.assistant.web.VerificationTrace
+import com.aria.assistant.web.WebResearchResult
+import com.aria.assistant.web.WebSource
 
 class AgentRunnerTest {
 
@@ -32,6 +41,9 @@ class AgentRunnerTest {
     private lateinit var billingManager: BillingManager
     private lateinit var featureGate: FeatureGate
     private lateinit var conversationRepo: ConversationRepository
+    private lateinit var settingsRepository: SettingsRepository
+    private lateinit var webVerificationPolicy: WebVerificationPolicy
+    private lateinit var webResearchService: WebResearchService
 
     @Before
     fun setUp() {
@@ -43,12 +55,17 @@ class AgentRunnerTest {
         billingManager = mock()
         featureGate = mock()
         conversationRepo = mock()
+        settingsRepository = mock()
+        webVerificationPolicy = mock()
+        webResearchService = mock()
 
         runBlocking {
             whenever(deviceContextProvider.snapshot()).thenReturn(DeviceContext())
         }
         whenever(promptBuilder.buildSystemPrompt(any(), any())).thenReturn("system prompt")
         whenever(conversationRepo.getRecentMessages()).thenReturn(flow { emit(emptyList()) })
+        whenever(settingsRepository.getVoiceConfig()).thenReturn(flow { emit(VoiceConfig()) })
+        whenever(webVerificationPolicy.shouldVerify(any(), any())).thenReturn(false)
         whenever(billingManager.isPremium).doReturn(MutableStateFlow(true))
         whenever(featureGate.isPremium).doReturn(MutableStateFlow(true))
         whenever(featureGate.isAllowed(any<String>())).doReturn(true)
@@ -181,6 +198,37 @@ class AgentRunnerTest {
         assertEquals("10 minutes, starting now.", runner.streamingText.value)
     }
 
+    @Test
+    fun `factual request is researched before generation and saves trace`() = runTest {
+        whenever(webVerificationPolicy.shouldVerify(any(), any())).thenReturn(true)
+        whenever(webResearchService.research(any())).thenReturn(
+            WebResearchResult(
+                VerificationTrace(
+                    query = "Who is the president of France?",
+                    status = VerificationStatus.VERIFIED,
+                    sources = listOf(
+                        WebSource("Source A", "https://example.com/a", "Evidence A"),
+                        WebSource("Source B", "https://example.org/b", "Evidence B")
+                    ),
+                    steps = listOf(VerificationStep("Search", "2 sources")),
+                    retrievedAt = 1L,
+                    elapsedMs = 2L
+                )
+            )
+        )
+        whenever(llmEngine.chat(any())).thenReturn(flow { emit("<say>Verified answer [1] [2].</say>") })
+
+        createRunner().run("Who is the president of France?") {}
+
+        verify(webResearchService).research("Who is the president of France?")
+        verify(conversationRepo).saveMessage(
+            org.mockito.kotlin.eq("aria"),
+            org.mockito.kotlin.eq("Verified answer [1] [2]."),
+            org.mockito.kotlin.any(),
+            org.mockito.kotlin.argThat { contains("web_verification") && contains("VERIFIED") }
+        )
+    }
+
     private fun createRunner(vararg tools: Tool): AgentRunner {
         return AgentRunner(
             llmEngine = llmEngine,
@@ -190,7 +238,10 @@ class AgentRunnerTest {
             actionParser = actionParser,
             ariaTTS = ariaTTS,
             featureGate = featureGate,
-            conversationRepo = conversationRepo
+            conversationRepo = conversationRepo,
+            settingsRepository = settingsRepository,
+            webVerificationPolicy = webVerificationPolicy,
+            webResearchService = webResearchService
         )
     }
 

@@ -33,6 +33,8 @@ class BillingManager @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _isPremium = MutableStateFlow(false)
     val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
+    private val _formattedPrices = MutableStateFlow<Map<String, String>>(emptyMap())
+    val formattedPrices: StateFlow<Map<String, String>> = _formattedPrices.asStateFlow()
 
     init {
         scope.launch {
@@ -60,6 +62,7 @@ class BillingManager @Inject constructor(
             override fun onBillingSetupFinished(result: BillingResult) {
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     checkExistingPurchases()
+                    refreshProductDetails()
                 }
             }
 
@@ -75,9 +78,7 @@ class BillingManager @Inject constructor(
                 .build()
         ) { result, purchases ->
             if (result.responseCode == BillingClient.BillingResponseCode.OK) {
-                val hasPremium = purchases.any {
-                    it.purchaseState == Purchase.PurchaseState.PURCHASED
-                }
+                val hasPremium = purchases.any(::isEntitlingPurchase)
                 _isPremium.value = hasPremium
                 scope.launch { settingsRepository.setPremiumEnabled(hasPremium) }
             }
@@ -85,7 +86,7 @@ class BillingManager @Inject constructor(
     }
 
     private fun handlePurchase(purchase: Purchase) {
-        if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+        if (isEntitlingPurchase(purchase)) {
             _isPremium.value = true
             scope.launch { settingsRepository.setPremiumEnabled(true) }
             if (!purchase.isAcknowledged) {
@@ -93,6 +94,24 @@ class BillingManager @Inject constructor(
                     .setPurchaseToken(purchase.purchaseToken)
                     .build()
                 billingClient.acknowledgePurchase(params) { }
+            }
+        }
+    }
+
+    private fun isEntitlingPurchase(purchase: Purchase): Boolean =
+        purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
+            purchase.products.any { it in PREMIUM_PRODUCT_IDS }
+
+    private fun refreshProductDetails() {
+        PREMIUM_PRODUCT_IDS.forEach { productId ->
+            queryProductDetailsAsync(productId) { details ->
+                val price = details?.subscriptionOfferDetails
+                    ?.firstOrNull()
+                    ?.pricingPhases
+                    ?.pricingPhaseList
+                    ?.lastOrNull()
+                    ?.formattedPrice
+                if (price != null) _formattedPrices.value += productId to price
             }
         }
     }
@@ -139,11 +158,18 @@ class BillingManager @Inject constructor(
             override fun onBillingSetupFinished(result: BillingResult) {
                 if (result.responseCode == BillingClient.BillingResponseCode.OK) {
                     checkExistingPurchases()
+                    refreshProductDetails()
                 }
             }
 
             override fun onBillingServiceDisconnected() {
             }
         })
+    }
+
+    companion object {
+        const val MONTHLY_PRODUCT_ID = "aria_premium_monthly"
+        const val YEARLY_PRODUCT_ID = "aria_premium_yearly"
+        val PREMIUM_PRODUCT_IDS = setOf(MONTHLY_PRODUCT_ID, YEARLY_PRODUCT_ID)
     }
 }
