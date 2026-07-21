@@ -48,12 +48,12 @@ if (hasFirebaseConfig) {
 
 android {
     namespace = "com.aria.assistant"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.aria.assistant"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = releaseVersionCode
         versionName = releaseVersionName
 
