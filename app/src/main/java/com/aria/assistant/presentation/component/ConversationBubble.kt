@@ -71,7 +71,7 @@ fun ConversationBubble(
             modifier = Modifier
                 .widthIn(max = 320.dp)
                 .combinedClickable(
-                    onClick = {},
+                    onClick = { actionMenuExpanded = true },
                     onLongClick = { actionMenuExpanded = true },
                 ),
             horizontalAlignment = if (isUser) Alignment.End else Alignment.Start

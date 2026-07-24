@@ -47,6 +47,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -434,6 +435,7 @@ private fun NebulaButton(text: String, enabled: Boolean = true, onClick: () -> U
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .alpha(if (enabled) 1f else 0.38f)
                 .background(
                     Brush.linearGradient(listOf(AuroraViolet, AuroraMagenta)),
                     RoundedCornerShape(999.dp)

@@ -155,6 +155,7 @@ fun PermissionsScreen(
 
                 val runtimeCaps = PhoneCapability.entries.filter {
                     it.kind == PhoneCapability.PermKind.RUNTIME &&
+                        it != PhoneCapability.MEDIA_CONTROL &&
                         (BuildConfig.ENABLE_RESTRICTED_MESSAGING ||
                             (it != PhoneCapability.SMS && it != PhoneCapability.READ_SMS))
                 }
@@ -187,6 +188,7 @@ fun PermissionsScreen(
 
                 val specialCaps = PhoneCapability.entries.filter {
                     it.kind == PhoneCapability.PermKind.SPECIAL &&
+                        it != PhoneCapability.APP_LAUNCH &&
                         (BuildConfig.ENABLE_ACCESSIBILITY_AUTOMATION || it != PhoneCapability.ACCESSIBILITY)
                 }
                 item {

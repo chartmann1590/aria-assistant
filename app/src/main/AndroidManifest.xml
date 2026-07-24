@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- ── Core voice assistant permissions ─────────────────────────────── -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
@@ -50,6 +51,14 @@
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.WRITE_CONTACTS" />
+
+    <!--
+        PACKAGE_USAGE_STATS: allows Aria to identify the foreground app for
+        context-aware help. Granted via Settings.ACTION_USAGE_ACCESS_SETTINGS —
+        not automatically granted.
+    -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
 
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
