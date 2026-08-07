@@ -1,6 +1,7 @@
 package com.aria.assistant.agent
 
 import com.aria.assistant.billing.FeatureGate
+import com.aria.assistant.data.review.ReviewSignal
 import com.aria.assistant.domain.model.AriaState
 import com.aria.assistant.domain.repository.ConversationRepository
 import com.aria.assistant.domain.repository.SettingsRepository
@@ -40,7 +41,8 @@ class AgentRunner @Inject constructor(
     private val conversationRepo: ConversationRepository,
     private val settingsRepository: SettingsRepository,
     private val webVerificationPolicy: WebVerificationPolicy,
-    private val webResearchService: WebResearchService
+    private val webResearchService: WebResearchService,
+    private val reviewSignal: ReviewSignal,
 ) {
     private val _streamingText = MutableStateFlow("")
     val streamingText: StateFlow<String> = _streamingText.asStateFlow()
@@ -216,6 +218,7 @@ class AgentRunner @Inject constructor(
 
     private suspend fun saveAndSpeak(text: String, metadata: String?, onStateChange: (AriaState) -> Unit) {
         conversationRepo.saveMessage("aria", text, currentSessionId, metadata)
+        reviewSignal.recordSuccessfulResponse()
         speak(text.replace(Regex("\\s*\\[\\d+]"), "").replace(Regex("\\s{2,}"), " ").trim(), onStateChange)
     }
 

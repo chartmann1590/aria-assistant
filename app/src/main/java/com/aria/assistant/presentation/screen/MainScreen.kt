@@ -110,6 +110,12 @@ fun MainScreen(
             activity?.let { viewModel.showInterstitial(it) }
         }
     }
+
+    LaunchedEffect(Unit) {
+        viewModel.requestReviewEvents.collect {
+            activity?.let { viewModel.launchReview(it) }
+        }
+    }
     var textInput by remember { mutableStateOf("") }
     var reportMessage by remember { mutableStateOf<ConversationMessage?>(null) }
 

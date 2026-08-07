@@ -195,6 +195,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.play.services.ads)
     implementation(libs.user.messaging.platform)
+    implementation(libs.play.review.ktx)
     implementation(libs.mlkit.translate)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

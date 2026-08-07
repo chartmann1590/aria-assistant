@@ -12,6 +12,9 @@ import com.aria.assistant.billing.FeatureGate
 import com.aria.assistant.data.model.ConversationMessage
 import com.aria.assistant.data.quality.QualityFeedback
 import com.aria.assistant.data.quality.QualityFeedbackClient
+import com.aria.assistant.data.review.ReviewSignal
+import com.google.android.play.core.review.ReviewManagerFactory
+import kotlinx.coroutines.tasks.await
 import com.aria.assistant.domain.model.AriaState
 import com.aria.assistant.domain.repository.ConversationRepository
 import com.aria.assistant.engine.AriaLogger
@@ -54,6 +57,7 @@ class MainViewModel @Inject constructor(
     private val adManager: AdManager,
     private val featureGate: FeatureGate,
     private val qualityFeedbackClient: QualityFeedbackClient,
+    private val reviewSignal: ReviewSignal,
 ) : ViewModel() {
 
     val ariaState: StateFlow<AriaState> = stateManager.state
@@ -61,6 +65,18 @@ class MainViewModel @Inject constructor(
     val isPremium: StateFlow<Boolean> = featureGate.isPremium
     val canRequestAds: StateFlow<Boolean> = adManager.canRequestAds
     val showInterstitialEvents: SharedFlow<Unit> = adManager.showInterstitialEvents
+    val requestReviewEvents: SharedFlow<Unit> = reviewSignal.readyToPrompt
+
+    /** Launches the official Play In-App Review dialog. Never a custom dialog. */
+    fun launchReview(activity: Activity) {
+        viewModelScope.launch {
+            runCatching {
+                val manager = ReviewManagerFactory.create(activity)
+                val reviewInfo = manager.requestReviewFlow().await()
+                manager.launchReviewFlow(activity, reviewInfo).await()
+            }
+        }
+    }
 
     fun recordAdInteraction() {
         adManager.recordInteraction()

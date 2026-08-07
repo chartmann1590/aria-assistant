@@ -2,6 +2,7 @@ package com.aria.assistant.agent
 
 import com.aria.assistant.billing.BillingManager
 import com.aria.assistant.billing.FeatureGate
+import com.aria.assistant.data.review.ReviewSignal
 import com.aria.assistant.domain.model.AriaState
 import com.aria.assistant.domain.repository.ConversationRepository
 import com.aria.assistant.domain.repository.SettingsRepository
@@ -44,6 +45,7 @@ class AgentRunnerTest {
     private lateinit var settingsRepository: SettingsRepository
     private lateinit var webVerificationPolicy: WebVerificationPolicy
     private lateinit var webResearchService: WebResearchService
+    private lateinit var reviewSignal: ReviewSignal
 
     @Before
     fun setUp() {
@@ -58,6 +60,7 @@ class AgentRunnerTest {
         settingsRepository = mock()
         webVerificationPolicy = mock()
         webResearchService = mock()
+        reviewSignal = mock()
 
         runBlocking {
             whenever(deviceContextProvider.snapshot()).thenReturn(DeviceContext())
@@ -241,7 +244,8 @@ class AgentRunnerTest {
             conversationRepo = conversationRepo,
             settingsRepository = settingsRepository,
             webVerificationPolicy = webVerificationPolicy,
-            webResearchService = webResearchService
+            webResearchService = webResearchService,
+            reviewSignal = reviewSignal
         )
     }
 
