@@ -115,6 +115,7 @@ fun SettingsScreen(
     onNavigateToPermissions: () -> Unit = {},
     onNavigateToAbout: () -> Unit = {},
     onNavigateToFeedback: () -> Unit = {},
+    onNavigateToMoreApps: () -> Unit = {},
 ) {
     val voiceConfig by viewModel.voiceConfig.collectAsState()
     val downloadStates by viewModel.downloadStates.collectAsState()
@@ -467,6 +468,28 @@ fun SettingsScreen(
                                 containerColor = if (feedbackViewModel.isConfigured) AuroraViolet else TextTertiary
                             ),
                             enabled = feedbackViewModel.isConfigured
+                        ) {
+                            Text(
+                                "Open",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                SectionLabel("More Apps")
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    SettingRow(
+                        label = "More apps from this developer",
+                        sub = "Check out our other privacy-first apps"
+                    ) {
+                        Button(
+                            onClick = onNavigateToMoreApps,
+                            modifier = Modifier.height(32.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = AuroraViolet)
                         ) {
                             Text(
                                 "Open",

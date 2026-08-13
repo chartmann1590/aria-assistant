@@ -28,7 +28,8 @@ fun AriaNavHost(navController: NavHostController, startDestination: String = "on
                 onUpgrade = { navController.navigate("premium") },
                 onNavigateToPermissions = { navController.navigate("permissions") },
                 onNavigateToAbout = { navController.navigate("about") },
-                onNavigateToFeedback = { navController.navigate("feedback") }
+                onNavigateToFeedback = { navController.navigate("feedback") },
+                onNavigateToMoreApps = { navController.navigate("moreApps") }
             )
         }
         composable("history") {
@@ -45,6 +46,9 @@ fun AriaNavHost(navController: NavHostController, startDestination: String = "on
         }
         composable("feedback") {
             FeedbackScreen(onBack = { navController.popBackStack() })
+        }
+        composable("moreApps") {
+            MoreAppsScreen(onBack = { navController.popBackStack() })
         }
     }
 }
