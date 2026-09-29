@@ -65,7 +65,7 @@ class AgentRunnerTest {
         runBlocking {
             whenever(deviceContextProvider.snapshot()).thenReturn(DeviceContext())
         }
-        whenever(promptBuilder.buildSystemPrompt(any(), any())).thenReturn("system prompt")
+        whenever(promptBuilder.buildSystemPrompt(any(), any(), org.mockito.kotlin.anyOrNull())).thenReturn("system prompt")
         whenever(conversationRepo.getRecentMessages()).thenReturn(flow { emit(emptyList()) })
         whenever(settingsRepository.getVoiceConfig()).thenReturn(flow { emit(VoiceConfig()) })
         whenever(webVerificationPolicy.shouldVerify(any(), any())).thenReturn(false)
@@ -245,7 +245,8 @@ class AgentRunnerTest {
             settingsRepository = settingsRepository,
             webVerificationPolicy = webVerificationPolicy,
             webResearchService = webResearchService,
-            reviewSignal = reviewSignal
+            reviewSignal = reviewSignal,
+            memoryRepository = com.aria.assistant.data.repository.FakeMemoryRepository()
         )
     }
 
