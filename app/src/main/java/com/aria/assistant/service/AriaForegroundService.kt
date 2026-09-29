@@ -65,7 +65,7 @@ class AriaForegroundService : Service() {
     private var conversationJob: Job? = null
     @Volatile private var wakeWordEnabled = true
     @Volatile private var wakeWordSensitivity = 0.5f
-    @Volatile private var privacyMode = false
+    @Volatile private var preferOnDeviceStt = true
     @Volatile private var languageCode = "en-US"
 
     override fun onCreate() {
@@ -93,9 +93,9 @@ class AriaForegroundService : Service() {
             settingsRepository.getVoiceConfig().collect { config ->
                 wakeWordEnabled = config.wakeWordEnabled
                 wakeWordSensitivity = config.wakeWordSensitivity
-                privacyMode = config.privacyMode
+                preferOnDeviceStt = config.preferOnDeviceStt
                 languageCode = config.language
-                AriaLogger.d("AriaForegroundService", "Settings: wake=$wakeWordEnabled, sensitivity=$wakeWordSensitivity, privacy=$privacyMode, lang=$languageCode")
+                AriaLogger.d("AriaForegroundService", "Settings: wake=$wakeWordEnabled, sensitivity=$wakeWordSensitivity, preferOnDeviceStt=$preferOnDeviceStt, lang=$languageCode")
                 if (!config.wakeWordEnabled) {
                     wakeWordDetector.stop()
                     AriaLogger.d("AriaForegroundService", "Wake word detector stopped (disabled in settings)")
@@ -422,8 +422,14 @@ class AriaForegroundService : Service() {
         return result
     }
 
+    /**
+     * Privacy-first transcription policy: use on-device Whisper whenever the
+     * model is available. Cloud STT runs only when the user explicitly opted
+     * out of on-device recognition AND the Whisper model is missing — never
+     * as a silent default.
+     */
     private suspend fun recognizeSpeech(): String {
-        return if (privacyMode && whisperAvailable) {
+        return if (whisperAvailable || preferOnDeviceStt) {
             recognizeWithOnDeviceSTT()
         } else {
             recognizeWithAndroidSTT()
@@ -434,7 +440,14 @@ class AriaForegroundService : Service() {
         AriaLogger.d("AriaForegroundService", "Using on-device Whisper STT")
         val audio = captureSpeech()
         if (audio.isEmpty()) return ""
-        return whisperSTT.transcribe(audio)
+        val transcript = whisperSTT.transcribe(audio)
+        // Model present but unusable, and the user allowed cloud: fall through
+        // rather than returning an empty transcript.
+        if (transcript.isBlank() && whisperAvailable && !preferOnDeviceStt) {
+            AriaLogger.w("AriaForegroundService", "Whisper returned nothing; falling back to Android STT")
+            return recognizeWithAndroidSTT()
+        }
+        return transcript
     }
 
     private suspend fun playActivationPing() {
