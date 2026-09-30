@@ -12,6 +12,7 @@ import com.aria.assistant.agent.CreateCalendarEventTool
 import com.aria.assistant.agent.DismissNotificationTool
 import com.aria.assistant.agent.EmailComposeTool
 import com.aria.assistant.agent.FlashlightTool
+import com.aria.assistant.agent.ForgetMemoryTool
 import com.aria.assistant.agent.GetBatteryTool
 import com.aria.assistant.agent.GetLatestPhotoTool
 import com.aria.assistant.agent.GetLocationTool
@@ -28,10 +29,12 @@ import com.aria.assistant.agent.ReadLastCallsTool
 import com.aria.assistant.agent.ReadNotificationsTool
 import com.aria.assistant.agent.ReadScreenTool
 import com.aria.assistant.agent.ReadSmsTool
+import com.aria.assistant.agent.RecallMemoryTool
 import com.aria.assistant.agent.RejectCallTool
 import com.aria.assistant.agent.ReplyNotificationTool
 import com.aria.assistant.agent.ResolveContactTool
 import com.aria.assistant.agent.ReverseGeocodeTool
+import com.aria.assistant.agent.SaveMemoryTool
 import com.aria.assistant.agent.ScrollTool
 import com.aria.assistant.agent.SendSmsTool
 import com.aria.assistant.agent.SetAlarmTool
@@ -95,7 +98,10 @@ object AgentModule {
         clipboardReadTool: ClipboardReadTool,
         clipboardWriteTool: ClipboardWriteTool,
         emailComposeTool: EmailComposeTool,
-        convertTool: ConvertTool
+        convertTool: ConvertTool,
+        saveMemoryTool: SaveMemoryTool,
+        recallMemoryTool: RecallMemoryTool,
+        forgetMemoryTool: ForgetMemoryTool
     ): Set<Tool> {
         return setOf(
             setTimerTool, setAlarmTool, cancelTimerTool, cancelAlarmTool,
@@ -112,7 +118,8 @@ object AgentModule {
             takePhotoTool, getLatestPhotoTool,
             readScreenTool, clickOnTool, scrollTool,
             flashlightTool, clipboardReadTool, clipboardWriteTool,
-            emailComposeTool, convertTool
+            emailComposeTool, convertTool,
+            saveMemoryTool, recallMemoryTool, forgetMemoryTool
         )
     }
 }

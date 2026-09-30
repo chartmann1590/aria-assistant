@@ -16,6 +16,10 @@ class WhisperSTT @Inject constructor(
 ) {
     private var recognizer: OfflineRecognizer? = null
 
+    /** True once a recognizer has been loaded successfully. */
+    val isInitialized: Boolean
+        get() = recognizer != null
+
     fun initialize(modelDir: String): Boolean {
         if (recognizer != null) return true
         val encoder = File(modelDir, ENCODER_FILENAME)

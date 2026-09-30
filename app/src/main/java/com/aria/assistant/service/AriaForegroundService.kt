@@ -65,7 +65,7 @@ class AriaForegroundService : Service() {
     private var conversationJob: Job? = null
     @Volatile private var wakeWordEnabled = true
     @Volatile private var wakeWordSensitivity = 0.5f
-    @Volatile private var privacyMode = false
+    @Volatile private var preferOnDeviceStt = true
     @Volatile private var languageCode = "en-US"
 
     override fun onCreate() {
@@ -93,9 +93,9 @@ class AriaForegroundService : Service() {
             settingsRepository.getVoiceConfig().collect { config ->
                 wakeWordEnabled = config.wakeWordEnabled
                 wakeWordSensitivity = config.wakeWordSensitivity
-                privacyMode = config.privacyMode
+                preferOnDeviceStt = config.preferOnDeviceStt
                 languageCode = config.language
-                AriaLogger.d("AriaForegroundService", "Settings: wake=$wakeWordEnabled, sensitivity=$wakeWordSensitivity, privacy=$privacyMode, lang=$languageCode")
+                AriaLogger.d("AriaForegroundService", "Settings: wake=$wakeWordEnabled, sensitivity=$wakeWordSensitivity, preferOnDeviceStt=$preferOnDeviceStt, lang=$languageCode")
                 if (!config.wakeWordEnabled) {
                     wakeWordDetector.stop()
                     AriaLogger.d("AriaForegroundService", "Wake word detector stopped (disabled in settings)")
@@ -422,19 +422,55 @@ class AriaForegroundService : Service() {
         return result
     }
 
+    /**
+     * Privacy-first transcription policy: use on-device Whisper whenever the
+     * recognizer is usable. When the user hasn't explicitly opted out of
+     * on-device recognition, the model is initialized lazily here — covering
+     * the case where the download finished after the service started. Cloud
+     * STT runs only when the user explicitly opted out of on-device
+     * recognition AND no Whisper model can be initialized — never as a
+     * silent default.
+     */
     private suspend fun recognizeSpeech(): String {
-        return if (privacyMode && whisperAvailable) {
-            recognizeWithOnDeviceSTT()
-        } else {
-            recognizeWithAndroidSTT()
+        // Key the guard on the recognizer actually being usable, not just on
+        // the preference flag — ensureWhisperInitialized() attempts the lazy
+        // init so a freshly completed download is picked up here.
+        if (whisperSTT.isInitialized || (preferOnDeviceStt && ensureWhisperInitialized())) {
+            return recognizeWithOnDeviceSTT()
         }
+        return recognizeWithAndroidSTT()
+    }
+
+    private suspend fun ensureWhisperInitialized(): Boolean {
+        if (whisperSTT.isInitialized) return true
+        val whisperDir = File(filesDir, "models/whisper").absolutePath
+        whisperAvailable = if (WhisperSTT.hasCompleteModel(whisperDir)) {
+            whisperSTT.initialize(whisperDir)
+        } else {
+            false
+        }
+        return whisperAvailable
     }
 
     private suspend fun recognizeWithOnDeviceSTT(): String {
         AriaLogger.d("AriaForegroundService", "Using on-device Whisper STT")
+        // The model download may have finished after this service initialized
+        // its engines — pick it up now instead of transcribing against a
+        // missing recognizer and returning a blank transcript.
+        if (!ensureWhisperInitialized()) {
+            AriaLogger.w("AriaForegroundService", "Whisper model still missing; trying Android STT instead")
+            return recognizeWithAndroidSTT()
+        }
         val audio = captureSpeech()
         if (audio.isEmpty()) return ""
-        return whisperSTT.transcribe(audio)
+        val transcript = whisperSTT.transcribe(audio)
+        // Whisper produced nothing usable, and the user allowed cloud: fall
+        // through rather than returning an empty transcript.
+        if (transcript.isBlank() && !preferOnDeviceStt) {
+            AriaLogger.w("AriaForegroundService", "Whisper returned nothing; falling back to Android STT")
+            return recognizeWithAndroidSTT()
+        }
+        return transcript
     }
 
     private suspend fun playActivationPing() {

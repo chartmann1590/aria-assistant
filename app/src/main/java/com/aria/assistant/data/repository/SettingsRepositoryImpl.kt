@@ -36,6 +36,8 @@ class SettingsRepositoryImpl @Inject constructor(
         val SELECTED_VOICE = stringPreferencesKey("selected_voice")
         val BOOT_START = booleanPreferencesKey("boot_start")
         val TEMPERATURE_UNIT = stringPreferencesKey("temperature_unit")
+        val PREFER_ON_DEVICE_STT = booleanPreferencesKey("prefer_on_device_stt")
+        @Deprecated("Legacy key; migrated to PREFER_ON_DEVICE_STT")
         val PRIVACY_MODE = booleanPreferencesKey("privacy_mode")
         val SELECTED_MODEL = stringPreferencesKey("selected_model")
         val WEB_VERIFICATION_MODE = stringPreferencesKey("web_verification_mode")
@@ -51,7 +53,11 @@ class SettingsRepositoryImpl @Inject constructor(
             uiLanguage = prefs[Keys.UI_LANGUAGE] ?: "en",
             selectedVoice = prefs[Keys.SELECTED_VOICE] ?: "en_US-amy-medium",
             temperatureUnit = prefs[Keys.TEMPERATURE_UNIT] ?: "celsius",
-            privacyMode = prefs[Keys.PRIVACY_MODE] ?: false,
+            // Default is privacy-first: on-device Whisper when available. Users who
+            // explicitly stored the legacy privacy_mode=false before this change
+            // keep that choice via the migration below.
+            preferOnDeviceStt = prefs[Keys.PREFER_ON_DEVICE_STT]
+                ?: (prefs[Keys.PRIVACY_MODE] ?: true),
             selectedModel = prefs[Keys.SELECTED_MODEL] ?: "E2B",
             webVerificationMode = WebVerificationMode.fromStored(prefs[Keys.WEB_VERIFICATION_MODE])
         )
@@ -67,7 +73,7 @@ class SettingsRepositoryImpl @Inject constructor(
             prefs[Keys.UI_LANGUAGE] = config.uiLanguage
             prefs[Keys.SELECTED_VOICE] = config.selectedVoice
             prefs[Keys.TEMPERATURE_UNIT] = config.temperatureUnit
-            prefs[Keys.PRIVACY_MODE] = config.privacyMode
+            prefs[Keys.PREFER_ON_DEVICE_STT] = config.preferOnDeviceStt
             prefs[Keys.SELECTED_MODEL] = config.selectedModel
             prefs[Keys.WEB_VERIFICATION_MODE] = config.webVerificationMode.name
         }
@@ -75,7 +81,7 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun updatePrivacyMode(enabled: Boolean) {
         context.dataStore.edit { prefs ->
-            prefs[Keys.PRIVACY_MODE] = enabled
+            prefs[Keys.PREFER_ON_DEVICE_STT] = enabled
         }
     }
 

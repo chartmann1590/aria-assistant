@@ -116,6 +116,7 @@ fun SettingsScreen(
     onNavigateToAbout: () -> Unit = {},
     onNavigateToFeedback: () -> Unit = {},
     onNavigateToMoreApps: () -> Unit = {},
+    onNavigateToMemory: () -> Unit = {},
 ) {
     val voiceConfig by viewModel.voiceConfig.collectAsState()
     val downloadStates by viewModel.downloadStates.collectAsState()
@@ -327,9 +328,12 @@ fun SettingsScreen(
                             }
                         }
                     }
-                    SettingRow(label = "Privacy Mode", sub = "Process speech entirely on-device (Whisper STT)") {
+                    SettingRow(
+                        label = "On-device speech recognition",
+                        sub = "Transcribe with on-device Whisper by default. Speech never leaves your phone unless you turn this off and the Whisper model is missing."
+                    ) {
                         Switch(
-                            checked = voiceConfig.privacyMode,
+                            checked = voiceConfig.preferOnDeviceStt,
                             onCheckedChange = { viewModel.updatePrivacyMode(it) },
                             colors = SwitchDefaults.colors(
                                 checkedThumbColor = Color.White,
@@ -434,6 +438,18 @@ fun SettingsScreen(
 
                 SectionLabel("Privacy")
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
+                    SettingRow(
+                        label = "Memory",
+                        sub = "Review or delete facts Aria remembers about you"
+                    ) {
+                        Button(
+                            onClick = onNavigateToMemory,
+                            modifier = Modifier.height(32.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = AuroraViolet)
+                        ) {
+                            Text("Open", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                        }
+                    }
                     SettingRow(
                         label = "Ad privacy choices",
                         sub = if (privacyOptionsRequired) {

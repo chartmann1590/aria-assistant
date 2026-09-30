@@ -6,7 +6,11 @@ import javax.inject.Singleton
 @Singleton
 class PromptBuilder @Inject constructor() {
 
-    fun buildSystemPrompt(tools: Collection<Tool>, deviceContext: DeviceContext): String {
+    fun buildSystemPrompt(
+        tools: Collection<Tool>,
+        deviceContext: DeviceContext,
+        memories: String? = null
+    ): String {
         return buildString {
             appendLine("You are Aria, a capable personal voice assistant running entirely on this device.")
             appendLine()
@@ -28,6 +32,8 @@ class PromptBuilder @Inject constructor() {
             appendLine("Then wait for <tool_result>. After the <tool_result>, either emit another <action> or if done, emit:")
             appendLine("  <say>your spoken response to the user</say>")
             appendLine()
+            appendLine("MEMORY: save_memory stores a fact permanently on this device and confirm briefly. Use it when the user says \"remember that...\". recall_memory searches stored facts; forget_memory deletes them (pass the id from recall results, or all=true). Never save secrets like passwords or payment details.")
+            appendLine()
             appendLine("Available tools:")
             for (tool in tools) {
                 val premiumNote = if (tool.requiresPremium) " [PREMIUM]" else ""
@@ -35,6 +41,11 @@ class PromptBuilder @Inject constructor() {
                 appendLine("    Schema: ${tool.paramSchema}")
             }
             appendLine()
+            if (!memories.isNullOrBlank()) {
+                appendLine("MEMORIES (durable facts the user asked you to remember):")
+                appendLine(memories)
+                appendLine()
+            }
             appendLine("Current device context:")
             appendLine(deviceContext.toPromptSection().ifBlank { "No context available" })
         }

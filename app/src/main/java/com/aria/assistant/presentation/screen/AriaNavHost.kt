@@ -29,11 +29,15 @@ fun AriaNavHost(navController: NavHostController, startDestination: String = "on
                 onNavigateToPermissions = { navController.navigate("permissions") },
                 onNavigateToAbout = { navController.navigate("about") },
                 onNavigateToFeedback = { navController.navigate("feedback") },
-                onNavigateToMoreApps = { navController.navigate("moreApps") }
+                onNavigateToMoreApps = { navController.navigate("moreApps") },
+                onNavigateToMemory = { navController.navigate("memory") }
             )
         }
         composable("history") {
             HistoryScreen(onBack = { navController.popBackStack() })
+        }
+        composable("memory") {
+            MemoryScreen(onBack = { navController.popBackStack() })
         }
         composable("permissions") {
             PermissionsScreen(onBack = { navController.popBackStack() })
