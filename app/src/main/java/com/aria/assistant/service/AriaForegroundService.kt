@@ -423,16 +423,19 @@ class AriaForegroundService : Service() {
     }
 
     /**
-     * Privacy-first transcription policy: use on-device Whisper whenever it is
-     * initialized, or whenever the user hasn't explicitly opted out of
-     * on-device recognition — in which case the model is initialized lazily
-     * here, covering the case where the download finished after the service
-     * started. Cloud STT runs only when the user explicitly opted out of
-     * on-device recognition AND no Whisper model can be initialized — never
-     * as a silent default.
+     * Privacy-first transcription policy: use on-device Whisper whenever the
+     * recognizer is usable. When the user hasn't explicitly opted out of
+     * on-device recognition, the model is initialized lazily here — covering
+     * the case where the download finished after the service started. Cloud
+     * STT runs only when the user explicitly opted out of on-device
+     * recognition AND no Whisper model can be initialized — never as a
+     * silent default.
      */
     private suspend fun recognizeSpeech(): String {
-        if (whisperSTT.isInitialized || preferOnDeviceStt) {
+        // Key the guard on the recognizer actually being usable, not just on
+        // the preference flag — ensureWhisperInitialized() attempts the lazy
+        // init so a freshly completed download is picked up here.
+        if (whisperSTT.isInitialized || (preferOnDeviceStt && ensureWhisperInitialized())) {
             return recognizeWithOnDeviceSTT()
         }
         return recognizeWithAndroidSTT()
