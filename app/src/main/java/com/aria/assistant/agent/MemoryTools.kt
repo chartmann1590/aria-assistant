@@ -59,7 +59,8 @@ class RecallMemoryTool @Inject constructor(
                 else "No memories match \"$query\"."
             )
         }
-        val payload = memories.joinToString("\n") { "- ${it.content}" }
+        // Include each memory's ID so forget_memory can target one fact.
+        val payload = memories.joinToString("\n") { "- [id=${it.id}] ${it.content}" }
         return ToolResult.Success("Remembered facts:\n$payload")
     }
 }

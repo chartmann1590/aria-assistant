@@ -39,6 +39,14 @@ class MemoryToolsTest {
     }
 
     @Test
+    fun `recall_memory payload includes ids for forget_memory`() = runTest {
+        val saved = repo.add("Mom's number is 555-0100").getOrThrow()
+        val result = RecallMemoryTool(repo).execute(JSONObject("{}"))
+        val payload = (result as ToolResult.Success).payload
+        assertTrue("payload should expose the memory id, was: $payload", payload.contains("[id=${saved.id}]"))
+    }
+
+    @Test
     fun `recall_memory filters by query`() = runTest {
         repo.add("Mom's number is 555-0100")
         repo.add("I take medication at 8am")

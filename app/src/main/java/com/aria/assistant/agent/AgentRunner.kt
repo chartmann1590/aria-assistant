@@ -85,7 +85,8 @@ class AgentRunner @Inject constructor(
             runCatching { repo.observeAll().first() }
                 .getOrNull()
                 ?.take(30)
-                ?.joinToString("\n") { "- ${it.content}" }
+                // Include IDs so forget_memory can target a single fact.
+                ?.joinToString("\n") { "- [id=${it.id}] ${it.content}" }
                 ?.takeIf { it.isNotBlank() }
         }
         val systemMsg = ChatMessage(
@@ -128,18 +129,22 @@ class AgentRunner @Inject constructor(
         // Sentence-level streaming: complete sentences are spoken while the
         // model is still generating, cutting time-to-first-word from the full
         // generation time to roughly one sentence.
-        val speechQueue = SpeechQueue(scope, ariaTTS)
+        val speechQueue = SpeechQueue(scope, ariaTTS, onStateChange)
         var streamSession = StreamingSession()
 
         for (iteration in 1..MAX_ITERATIONS) {
             onStateChange(AriaState.PROCESSING)
             _streamingText.value = ""
 
-            val responseText = collectFullResponse(messages) { _ ->
+            val responseText = collectFullResponse(messages) { token ->
+                // Append first, then derive display/speech state from the
+                // updated buffer — otherwise every delta would be computed
+                // from a stale buffer and nothing would ever stream.
+                streamSession.append(token)
                 _streamingText.value = streamSession.displayText
-                speechQueue.feed(streamSession.spokenReadyDelta())
+                speechQueue.feed(spokenText(streamSession.spokenReadyDelta()))
             }
-            speechQueue.feed(streamSession.spokenReadyDelta(final = true))
+            speechQueue.feed(spokenText(streamSession.spokenReadyDelta(final = true)))
 
             val action = actionParser.extractAction(responseText)
 
@@ -224,8 +229,14 @@ class AgentRunner @Inject constructor(
         val spokenPrefix = streamSession.spokenSoFar().trim()
         conversationRepo.saveMessage("aria", output, currentSessionId, metadata)
         reviewSignal.recordSuccessfulResponse()
+        // Let queued sentences finish being handed to TTS before stopping the
+        // queue — shutdown() clears pending, so draining first is what keeps
+        // the tail of a streamed response from being silently dropped.
+        speechQueue.drain()
         speechQueue.shutdown()
         val toSpeak = when {
+            // Everything was already spoken during streaming.
+            spokenPrefix.isNotBlank() && output.startsWith(spokenPrefix) && output.length == spokenPrefix.length -> ""
             spokenPrefix.isBlank() -> output
             output.startsWith(spokenPrefix) && output.length > spokenPrefix.length ->
                 output.substring(spokenPrefix.length)
@@ -260,7 +271,9 @@ class AgentRunner @Inject constructor(
      */
     private class StreamingSession {
         private val raw = StringBuilder()
-        private var spokenUpTo = 0 // absolute index into raw, up to last sentence boundary
+
+        /** Absolute index into [raw] up to which text has been handed to TTS. */
+        private var spokenUpTo = 0
 
         /** Display text with protocol tags stripped, for the live UI. */
         val displayText: String
@@ -278,26 +291,32 @@ class AgentRunner @Inject constructor(
         fun spokenReadyDelta(final: Boolean = false): String {
             val text = raw.toString()
             val region = activeSpokenRegion(text) ?: return ""
-            if (region.start < spokenUpTo) {
-                // Region moved backwards (new turn after tool result): resync.
+            if (spokenUpTo < region.start) {
+                // The speakable region only starts mid-buffer (e.g. <say>
+                // opened after leading text): skip ahead to its first char.
                 spokenUpTo = region.start
             }
-            val pending = text.substring(spokenUpTo.coerceAtLeast(region.start), region.endInclusive + 1)
+            val pending = text.substring(spokenUpTo, region.endInclusive + 1)
             val boundary = sentenceBoundary(pending)
             if (boundary == null) {
-                return if (final) pending.trim() else ""
+                if (final) {
+                    // The tail is handed to TTS now — mark it consumed so the
+                    // end-of-turn logic doesn't speak it a second time.
+                    spokenUpTo = region.endInclusive + 1
+                    return pending.trim()
+                }
+                return ""
             }
-            val chunk = pending.take(boundary)
+            val chunk = pending.take(boundary).trim()
             spokenUpTo += boundary
-            return chunk.trim()
+            return chunk
         }
 
         /** Everything already handed to TTS for this turn. */
         fun spokenSoFar(): String {
             val text = raw.toString()
             val region = activeSpokenRegion(text) ?: return ""
-            val end = spokenUpTo.coerceIn(region.start, region.endInclusive + 1)
-            return text.substring(region.start, end)
+            return text.substring(region.start, spokenUpTo.coerceIn(region.start, region.endInclusive + 1))
         }
 
         /**
@@ -345,7 +364,8 @@ class AgentRunner @Inject constructor(
     /** Serializes sentence-level speech so sentences play in order. */
     private class SpeechQueue(
         private val scope: CoroutineScope,
-        private val ariaTTS: AriaTTS
+        private val ariaTTS: AriaTTS,
+        private val onStateChange: (AriaState) -> Unit
     ) {
         private val pending = ArrayDeque<String>()
         private var job: Job? = null
@@ -377,6 +397,9 @@ class AgentRunner @Inject constructor(
             job = scope.launch {
                 while (true) {
                     val next = synchronized(pending) { pending.removeFirstOrNull() } ?: break
+                    // Streamed sentences bypass speak(), so drive the state
+                    // machine here to keep SPEAKING visible during playback.
+                    onStateChange(AriaState.SPEAKING)
                     ariaTTS.speak(next)
                 }
             }

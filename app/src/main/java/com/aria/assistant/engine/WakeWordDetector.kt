@@ -97,7 +97,7 @@ class WakeWordDetector @Inject constructor(
                     WakeWordModel(
                         name = WAKE_PHRASE,
                         modelPath = WAKE_MODEL_ASSET,
-                        threshold = 0.5f
+                        threshold = neuralThreshold(sensitivity)
                     )
                 ),
                 detectionMode = DetectionMode.SINGLE_BEST,

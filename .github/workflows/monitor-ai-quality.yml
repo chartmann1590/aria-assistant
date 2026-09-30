@@ -49,6 +49,9 @@ jobs:
       - name: Create or update trend issue
         env:
           GH_TOKEN: ${{ github.token }}
+          # No checkout step in this workflow, so gh has no git remote to
+          # infer the repository from — set it explicitly.
+          GH_REPO: ${{ github.repository }}
         run: |
           gh label create feedback --color 7C3AED --description "AI quality feedback trends" --force
           title='[Aria Quality Trends] Rolling 7-day report'

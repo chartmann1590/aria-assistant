@@ -423,27 +423,47 @@ class AriaForegroundService : Service() {
     }
 
     /**
-     * Privacy-first transcription policy: use on-device Whisper whenever the
-     * model is available. Cloud STT runs only when the user explicitly opted
-     * out of on-device recognition AND the Whisper model is missing — never
+     * Privacy-first transcription policy: use on-device Whisper whenever it is
+     * initialized, or whenever the user hasn't explicitly opted out of
+     * on-device recognition — in which case the model is initialized lazily
+     * here, covering the case where the download finished after the service
+     * started. Cloud STT runs only when the user explicitly opted out of
+     * on-device recognition AND no Whisper model can be initialized — never
      * as a silent default.
      */
     private suspend fun recognizeSpeech(): String {
-        return if (whisperAvailable || preferOnDeviceStt) {
-            recognizeWithOnDeviceSTT()
-        } else {
-            recognizeWithAndroidSTT()
+        if (whisperSTT.isInitialized || preferOnDeviceStt) {
+            return recognizeWithOnDeviceSTT()
         }
+        return recognizeWithAndroidSTT()
+    }
+
+    private suspend fun ensureWhisperInitialized(): Boolean {
+        if (whisperSTT.isInitialized) return true
+        val whisperDir = File(filesDir, "models/whisper").absolutePath
+        whisperAvailable = if (WhisperSTT.hasCompleteModel(whisperDir)) {
+            whisperSTT.initialize(whisperDir)
+        } else {
+            false
+        }
+        return whisperAvailable
     }
 
     private suspend fun recognizeWithOnDeviceSTT(): String {
         AriaLogger.d("AriaForegroundService", "Using on-device Whisper STT")
+        // The model download may have finished after this service initialized
+        // its engines — pick it up now instead of transcribing against a
+        // missing recognizer and returning a blank transcript.
+        if (!ensureWhisperInitialized()) {
+            AriaLogger.w("AriaForegroundService", "Whisper model still missing; trying Android STT instead")
+            return recognizeWithAndroidSTT()
+        }
         val audio = captureSpeech()
         if (audio.isEmpty()) return ""
         val transcript = whisperSTT.transcribe(audio)
-        // Model present but unusable, and the user allowed cloud: fall through
-        // rather than returning an empty transcript.
-        if (transcript.isBlank() && whisperAvailable && !preferOnDeviceStt) {
+        // Whisper produced nothing usable, and the user allowed cloud: fall
+        // through rather than returning an empty transcript.
+        if (transcript.isBlank() && !preferOnDeviceStt) {
             AriaLogger.w("AriaForegroundService", "Whisper returned nothing; falling back to Android STT")
             return recognizeWithAndroidSTT()
         }

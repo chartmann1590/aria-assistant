@@ -202,6 +202,43 @@ class AgentRunnerTest {
     }
 
     @Test
+    fun `streamed tokens reach TTS before generation completes`() = runTest {
+        val runner = createRunner()
+        // Split the response across tokens: if the runner discards streamed
+        // tokens, nothing is queued until the final delta and only one speak
+        // call happens; with streaming wired up the first sentence goes out
+        // on its own.
+        whenever(llmEngine.chat(any())).thenReturn(
+            flow {
+                emit("<say>The first complete sentence arrives.")
+                emit(" A second sentence follows it")
+                emit(" right after the first one ends</say>")
+            }
+        )
+
+        runner.run("tell me something") {}
+
+        verify(ariaTTS).speak(org.mockito.kotlin.argThat { contains("The first complete sentence") })
+        verify(ariaTTS, org.mockito.kotlin.times(2)).speak(any<String>())
+    }
+
+    @Test
+    fun `fully streamed response is not spoken twice`() = runTest {
+        val runner = createRunner()
+        whenever(llmEngine.chat(any())).thenReturn(
+            flow {
+                emit("<say>Here is one sentence.")
+                emit(" Here is another.</say>")
+            }
+        )
+
+        runner.run("tell me two things") {}
+
+        verify(ariaTTS, org.mockito.kotlin.times(1)).speak(any<String>())
+        verify(ariaTTS).speak("Here is one sentence. Here is another.")
+    }
+
+    @Test
     fun `factual request is researched before generation and saves trace`() = runTest {
         whenever(webVerificationPolicy.shouldVerify(any(), any())).thenReturn(true)
         whenever(webResearchService.research(any())).thenReturn(
