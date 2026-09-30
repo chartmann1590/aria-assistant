@@ -438,33 +438,38 @@ fun SettingsScreen(
 
                 SectionLabel("Privacy")
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
-                    SettingRow(
-                        label = "Memory",
-                        sub = "Review or delete facts Aria remembers about you"
-                    ) {
-                        Button(
-                            onClick = onNavigateToMemory,
-                            modifier = Modifier.height(32.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = AuroraViolet)
+                    // GlassCard is a Box — rows MUST live in a Column or they
+                    // render stacked on top of each other (see Voice Controls
+                    // / Preferences sections for the same pattern).
+                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                        SettingRow(
+                            label = "Memory",
+                            sub = "Review or delete facts Aria remembers about you"
                         ) {
-                            Text("Open", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                            Button(
+                                onClick = onNavigateToMemory,
+                                modifier = Modifier.height(32.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = AuroraViolet)
+                            ) {
+                                Text("Open", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                            }
                         }
-                    }
-                    SettingRow(
-                        label = "Ad privacy choices",
-                        sub = if (privacyOptionsRequired) {
-                            "Review or change your advertising consent"
-                        } else {
-                            "Advertising privacy settings"
-                        }
-                    ) {
-                        Button(
-                            onClick = { activity?.let(viewModel::showAdPrivacyOptions) },
-                            enabled = activity != null,
-                            modifier = Modifier.height(32.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = AuroraViolet)
+                        SettingRow(
+                            label = "Ad privacy choices",
+                            sub = if (privacyOptionsRequired) {
+                                "Review or change your advertising consent"
+                            } else {
+                                "Advertising privacy settings"
+                            }
                         ) {
-                            Text("Open", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                            Button(
+                                onClick = { activity?.let(viewModel::showAdPrivacyOptions) },
+                                enabled = activity != null,
+                                modifier = Modifier.height(32.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = AuroraViolet)
+                            ) {
+                                Text("Open", style = MaterialTheme.typography.labelSmall, color = Color.White)
+                            }
                         }
                     }
                 }
