@@ -56,6 +56,7 @@ class BillingManager @Inject constructor(
                     .enableOneTimeProducts()
                     .build()
             )
+            .enableAutoServiceReconnection()
             .build()
 
         billingClient.startConnection(object : BillingClientStateListener {
@@ -147,8 +148,8 @@ class BillingManager @Inject constructor(
                 )
             ).build()
 
-        billingClient.queryProductDetailsAsync(params) { _, productDetailsList ->
-            callback(productDetailsList?.firstOrNull())
+        billingClient.queryProductDetailsAsync(params) { _, queryResult ->
+            callback(queryResult.productDetailsList.firstOrNull())
         }
     }
 
