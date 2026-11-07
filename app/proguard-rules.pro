@@ -124,3 +124,8 @@
 # Never rename or strip anything in the android.* namespace; the device's framework copy is the one that loads.
 -keep class android.** { *; }
 -keepnames class android.** { *; }
+
+# LiteRT-LM (Gemma 4 chat): its native code calls the Java callback by name (onMessage/onDone);
+# R8 renamed them and the first chat message aborted the app (NoSuchMethodError in nativeSendMessageAsync).
+-keep class com.google.ai.edge.** { *; }
+-dontwarn com.google.ai.edge.**
