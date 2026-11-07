@@ -1,0 +1,40 @@
+launch
+wait 15
+shot 01-meet-aria
+taploop (?i)^(allow|ok|while using the app|only this time)$
+scrollto (?i)^get started$
+shot 02-language
+tap (?i)^get started$
+wait 60
+shot 03-downloading
+wait 120
+wait 120
+tap (?i)^continue$
+wait 30
+shot 04-after-model
+tap (?i)^skip$
+wait 3
+taploop (?i)^(allow|ok|while using the app|only this time|deny|don.t allow)$
+tap (?i)^skip$
+wait 3
+tap (?i)^skip$
+wait 3
+tap (?i)^done
+wait 10
+adclose
+taploop (?i)^(allow|ok|while using the app|only this time)$
+shot 05-main
+tap (?i)^premium$
+wait 4
+shot 20-paywall
+scrollto (?i)^restore purchases$
+wait 3
+shot 21-restore-email
+type hartmannstudios@mail.tab.bot
+tap (?i)^continue$
+wait 15
+shot 22-after-restore-premium-active
+back
+wait 3
+shot 23-main
+sh logcat -d -s DirectBilling

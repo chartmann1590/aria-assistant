@@ -70,13 +70,13 @@ val crossPromoApps: List<CrossPromoApp> = listOf(
 private fun openPlayStoreListing(context: Context, packageName: String) {
     try {
         context.startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$packageName")).apply {
+            Intent(Intent.ACTION_VIEW, Uri.parse((if (com.aria.assistant.BuildConfig.STORE == "direct") "https://charleshartmann.com/apps/" else "market://details?id=$packageName"))).apply {
                 setPackage("com.android.vending")
             }
         )
     } catch (e: ActivityNotFoundException) {
         context.startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$packageName"))
+            Intent(Intent.ACTION_VIEW, Uri.parse((if (com.aria.assistant.BuildConfig.STORE == "direct") "https://charleshartmann.com/apps/" else "https://play.google.com/store/apps/details?id=$packageName")))
         )
     }
 }

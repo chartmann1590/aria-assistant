@@ -1,0 +1,120 @@
+name: Direct download build (Stripe) + emulator test
+# Direct-download build of this app (GitHub Releases / charleshartmann.com): same code, built with -Pstore=direct
+# (Stripe Checkout instead of Google Play Billing, no Google Play links, no Play review prompt).
+# Branch builds only make a DRAFT release; nothing is uploaded to any store.
+on:
+  push:
+    branches: [direct-stripe]
+  workflow_dispatch:
+    inputs:
+      steps:
+        description: steps file under .github/direct (steps-release.txt or steps-restore.txt)
+        default: steps-release.txt
+permissions:
+  contents: write
+concurrency:
+  group: direct-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  direct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Make Gradle wrapper executable
+      run: chmod +x gradlew
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v4
+    - name: Materialize Firebase and release signing files
+      env:
+        GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
+        RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+        RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+        ADMOB_BANNER_AD_UNIT_ID: ${{ secrets.ADMOB_BANNER_AD_UNIT_ID }}
+        ADMOB_INTERSTITIAL_AD_UNIT_ID: ${{ secrets.ADMOB_INTERSTITIAL_AD_UNIT_ID }}
+        GH_REPO_OWNER: ${{ secrets.GH_REPO_OWNER }}
+        GH_REPO_NAME: ${{ secrets.GH_REPO_NAME }}
+      run: |
+        printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
+        printf '%s' "$RELEASE_KEYSTORE" | base64 --decode > app/release-upload.jks
+        {
+          echo 'storeFile=app/release-upload.jks'
+          printf 'storePassword=%s\n' "$RELEASE_KEYSTORE_PASSWORD"
+          printf 'keyAlias=%s\n' "$RELEASE_KEY_ALIAS"
+          printf 'keyPassword=%s\n' "$RELEASE_KEY_PASSWORD"
+        } > keystore.properties
+        {
+          printf 'admob.app.id=%s\n' "$ADMOB_APP_ID"
+          printf 'admob.banner.id=%s\n' "$ADMOB_BANNER_AD_UNIT_ID"
+          printf 'admob.interstitial.id=%s\n' "$ADMOB_INTERSTITIAL_AD_UNIT_ID"
+          printf 'github.repo.owner=%s\n' "$GH_REPO_OWNER"
+          printf 'github.repo.name=%s\n' "$GH_REPO_NAME"
+        } > local.properties
+    - name: Compute release version
+      shell: bash
+      run: |
+        version_code="$(date -u +'%y%j%H%M')"
+        version_name="1.0.0.$(date -u +'%Y%m%d.%H%M')"
+        echo "ANDROID_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
+        echo "ANDROID_VERSION_NAME=$version_name" >> "$GITHUB_ENV"
+    - name: Build direct APK (store=direct)
+      env: {}
+      run: |
+        set -o pipefail
+        ./gradlew :app:assembleRelease -Pstore=direct 2>&1 | tee -a /tmp/dsk-build.log
+        cd "$GITHUB_WORKSPACE"
+        mkdir -p dsk-apk
+        A=$(find . -path "*/build/outputs/apk/*release*/*.apk" ! -name "*unsigned*" | head -1); [ -z "$A" ] && A=$(find . -path "*/build/outputs/apk/*release*/*.apk" | head -1)
+        cp "$A" dsk-apk/Aria-direct-release.apk
+        ls -la dsk-apk
+        BT=$ANDROID_HOME/build-tools/$(ls $ANDROID_HOME/build-tools | sort -V | tail -1)
+        $BT/apksigner verify --print-certs dsk-apk/Aria-direct-release.apk | head -3 || true
+        $BT/aapt2 dump badging dsk-apk/Aria-direct-release.apk | head -3 || true
+        echo "--- Play Store URL strings left in the direct release dex:"; unzip -p dsk-apk/Aria-direct-release.apk "classes*.dex" | strings | grep -E "play\.google\.com/store|market://" | head || true
+    - name: Ship build log tail to the private drop (on failure)
+      if: failure()
+      env:
+        DROP_KEY: ${{ secrets.DROP_KEY }}
+      run: |
+        tail -c 60000 /tmp/dsk-build.log 2>/dev/null | curl -s -m 60 -X PUT -H "X-Key: $DROP_KEY" --data-binary @- "https://hs-apk-drop.charles-h-hartmann1.workers.dev/c/dsklog_${{ github.event.repository.name }}_r${{ github.run_number }}/0" || true
+    - name: Enable KVM
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+    - name: Emulator test (phone, Google APIs, no Play Store)
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 30
+        profile: pixel_5
+        target: google_apis
+        arch: x86_64
+        ram-size: 3072M
+        disk-size: 8192M
+        emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+        disable-animations: true
+        script: STEPS_FILE=${{ github.event.inputs.steps || 'steps-release.txt' }} bash .github/direct/run-tests.sh
+    - name: Upload test results to Tab's private drop
+      if: always()
+      env:
+        DROP_KEY: ${{ secrets.DROP_KEY }}
+      run: |
+        bash .github/direct/direct-upload.sh /tmp/dsk-out dsk_Aria_r${{ github.run_number }}
+    - name: Draft release with the direct APK (not published)
+      if: success()
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: direct-${{ github.run_number }}
+        name: Direct build ${{ github.run_number }} (${{ github.sha }})
+        draft: true
+        files: dsk-apk/Aria-direct-release.apk

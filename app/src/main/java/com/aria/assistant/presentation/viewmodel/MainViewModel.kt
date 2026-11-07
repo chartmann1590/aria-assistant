@@ -69,6 +69,7 @@ class MainViewModel @Inject constructor(
 
     /** Launches the official Play In-App Review dialog. Never a custom dialog. */
     fun launchReview(activity: Activity) {
+        if (com.aria.assistant.BuildConfig.STORE == "direct") return // direct (non-Play) build: no Play review prompt
         viewModelScope.launch {
             runCatching {
                 val manager = ReviewManagerFactory.create(activity)

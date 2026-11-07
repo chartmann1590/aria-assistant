@@ -372,6 +372,22 @@ fun PremiumScreen(
                     }
                 }
 
+                if (com.hartmannstudios.direct.DirectBilling.isDirect) {
+                    // Direct (GitHub / charleshartmann.com) build: Stripe Checkout, restore by email, Stripe's customer portal.
+                    Text(
+                        "Prices in USD. Secure checkout by Stripe. Subscriptions renew automatically until you cancel (Manage subscription below). Your purchase is tied to the email you enter at checkout.",
+                        style = MaterialTheme.typography.labelSmall, color = TextSecondary,
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp)
+                    )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center) {
+                        TextButton(onClick = { activity?.let { viewModel.restoreDirect(it) } }) {
+                            Text("Restore Purchases", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                        }
+                        TextButton(onClick = { activity?.let { viewModel.manageSubscription(it) } }) {
+                            Text("Manage subscription", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+                        }
+                    }
+                } else
                 TextButton(
                     onClick = { viewModel.restorePurchases() },
                     modifier = Modifier

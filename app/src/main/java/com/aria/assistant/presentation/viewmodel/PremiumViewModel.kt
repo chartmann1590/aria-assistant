@@ -22,4 +22,8 @@ class PremiumViewModel @Inject constructor(
     fun restorePurchases() {
         billingManager.retryConnection()
     }
+
+    /** Direct (GitHub / charleshartmann.com) builds: restore Stripe purchases by email / open Stripe's portal. */
+    fun restoreDirect(activity: Activity) = billingManager.restore(activity)
+    fun manageSubscription(activity: Activity) = billingManager.manageSubscription(activity)
 }

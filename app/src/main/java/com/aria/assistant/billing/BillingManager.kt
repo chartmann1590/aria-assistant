@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.hartmannstudios.direct.DirectBilling
 
 @Singleton
 class BillingManager @Inject constructor(
@@ -44,7 +45,27 @@ class BillingManager @Inject constructor(
 
     private lateinit var billingClient: BillingClient
 
+    // Direct (GitHub / charleshartmann.com) build: Stripe Checkout through DirectBilling instead of Google Play.
+    private fun startDirect() {
+        DirectBilling.init(context, "aria")
+        _formattedPrices.value = mapOf(MONTHLY_PRODUCT_ID to "$2.99", YEARLY_PRODUCT_ID to "$19.99")
+        DirectBilling.addListener { updateDirect() }
+        updateDirect()
+    }
+    private fun updateDirect() {
+        val premium = DirectBilling.isEntitled(*PREMIUM_PRODUCT_IDS.toTypedArray())
+        _isPremium.value = premium
+        scope.launch { settingsRepository.setPremiumEnabled(premium) }
+    }
+    /** Direct builds: look up Stripe purchases by email (new phone, reinstall). */
+    fun restore(activity: Activity) { if (DirectBilling.isDirect) DirectBilling.restore(activity) }
+    fun manageSubscription(activity: Activity) { if (DirectBilling.isDirect) DirectBilling.manageSubscription(activity) }
+
     init {
+        if (DirectBilling.isDirect) startDirect() else startPlay()
+    }
+
+    private fun startPlay() {
         billingClient = BillingClient.newBuilder(context)
             .setListener { billingResult, purchases ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
@@ -73,6 +94,7 @@ class BillingManager @Inject constructor(
     }
 
     fun checkExistingPurchases() {
+        if (DirectBilling.isDirect) { updateDirect(); return }
         billingClient.queryPurchasesAsync(
             QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.SUBS)
@@ -118,6 +140,7 @@ class BillingManager @Inject constructor(
     }
 
     fun launchBillingFlow(activity: Activity, productId: String) {
+        if (DirectBilling.isDirect) { DirectBilling.purchase(activity, productId); return }
         queryProductDetailsAsync(productId) { productDetails ->
             if (productDetails == null) return@queryProductDetailsAsync
             val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken
@@ -154,6 +177,7 @@ class BillingManager @Inject constructor(
     }
 
     fun retryConnection() {
+        if (DirectBilling.isDirect) { updateDirect(); return }
         if (!::billingClient.isInitialized) return
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {

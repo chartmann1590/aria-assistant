@@ -47,10 +47,15 @@ if (hasFirebaseConfig) {
 }
 
 android {
+    // DirectBilling: real Stripe client in direct builds, a no-op stub in Play builds
+    sourceSets.getByName("main").java.srcDir(if (((project.findProperty("store") as String?) ?: "play") == "direct") "src/hsdirect/java" else "src/hsplay/java")
     namespace = "com.aria.assistant"
     compileSdk = 36
 
     defaultConfig {
+        // Store this build is for: "play" (default) or "direct" (./gradlew ... -Pstore=direct, GitHub/charleshartmann.com APK).
+        // Direct builds use Stripe Checkout (DirectBilling) instead of Google Play Billing, and drop Play links + the Play review prompt.
+        buildConfigField("String", "STORE", "\"${(project.findProperty("store") as String?) ?: "play"}\"")
         applicationId = "com.aria.assistant"
         minSdk = 26
         targetSdk = 36
@@ -126,6 +131,8 @@ android {
             buildConfigField("String", "GITHUB_API_TOKEN", "\"\"")
             signingConfigs.findByName("release")?.let { signingConfig = it }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Direct (non-Play) build only: keep android.* (a bundled copy got renamed by R8 -> launch crash without Play services)
+            if (((project.findProperty("store") as String?) ?: "play") == "direct") proguardFile("proguard-direct.pro")
         }
         debug {
             isDebuggable = true
