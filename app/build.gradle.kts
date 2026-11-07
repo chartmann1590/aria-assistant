@@ -49,6 +49,7 @@ if (hasFirebaseConfig) {
 android {
     // DirectBilling: real Stripe client in direct builds, a no-op stub in Play builds
     sourceSets.getByName("main").java.srcDir(if (((project.findProperty("store") as String?) ?: "play") == "direct") "src/hsdirect/java" else "src/hsplay/java")
+    sourceSets.getByName("main").kotlin.srcDir(if (((project.findProperty("store") as String?) ?: "play") == "direct") "src/hsdirect/java" else "src/hsplay/java")
     namespace = "com.aria.assistant"
     compileSdk = 36
 
