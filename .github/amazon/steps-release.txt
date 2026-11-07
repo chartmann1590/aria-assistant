@@ -1,36 +1,51 @@
 launch
 wait 15
 shot 01-meet-aria
-taploop (?i)^(allow|ok|while using the app|only this time)$
 scrollto (?i)^get started$
-shot 02-language
-tap (?i)^get started$
 wait 60
-shot 03-downloading
+shot 02-downloading
 wait 120
-shot 04-download-2
+shot 03-download-2
 wait 120
-shot 05-download-3
+shot 04-download-3
 tap (?i)^continue$
-wait 30
-shot 06-after-model
+wait 20
+shot 05-mic
+tap (?i)^allow microphone access$
+wait 3
+taploop (?i)^(allow|ok|while using the app|only this time)$
+wait 3
+shot 06-battery
 tap (?i)^skip$
 wait 3
-taploop (?i)^(allow|ok|while using the app|only this time|deny|don.t allow)$
+shot 07-permissions
 tap (?i)^skip$
 wait 3
-tap (?i)^skip$
-wait 3
-shot 07-onboarding-end
-tap (?i)^done
+shot 08-wake-word
+scrollto (?i)^done
 wait 10
 adclose
-shot 08-main
-tapxy 940 60
+shot 09-main
+tap (?i)^(type a message|message|ask aria).*
+type Hello
+tap (?i)^send$
+wait 90
+shot 10-chat-reply
+tap (?i)^history$
 wait 4
-shot 09-topbar
+shot 11-history
 back
 wait 2
-am start -n com.aria.assistant/.presentation.MainActivity
-wait 5
-shot 10-main-again
+tap (?i)^settings$
+wait 4
+shot 12-settings
+swipeup
+wait 1
+shot 13-settings-2
+swipeup
+swipeup
+wait 1
+shot 14-settings-bottom
+back
+wait 2
+shot 15-main-again
