@@ -1,10 +1,11 @@
-name: Amazon Appstore build + emulator test
 # Amazon Appstore (Fire) build of this app: same code, built with -Pstore=amazon (no Google Play
 # links, no Play in-app review prompt). Run on a tablet-size emulator without Google Play
 # services (like Fire). Branch builds only make a DRAFT release; nothing is uploaded to any store.
+name: Amazon Appstore build + emulator test
 on:
   push:
-    branches: [amazon]
+    branches:
+    - amazon
   workflow_dispatch: {}
 permissions:
   contents: write
@@ -99,6 +100,15 @@ jobs:
         $BT/apksigner verify --print-certs amz-apk/Aria-amazon-release.apk | head -3 || true
         $BT/aapt2 dump badging amz-apk/Aria-amazon-release.apk | head -3 || true
         echo "--- Play Store URL strings left in the amazon release dex:"; unzip -p amz-apk/Aria-amazon-release.apk "classes*.dex" | strings | grep -E "play\.google\.com/store|market://" | head || true
+    - name: Diagnose bundled android.* framework classes (R8 rename crash)
+      continue-on-error: true
+      run: |
+        APK=$(ls amz-apk/*.apk | head -1)
+        BT=$ANDROID_SDK_ROOT/build-tools/$(ls $ANDROID_SDK_ROOT/build-tools | sort -V | tail -1)
+        mkdir -p /tmp/dx && cd /tmp/dx && unzip -o -q "$GITHUB_WORKSPACE/$APK" 'classes*.dex'
+        for f in classes*.dex; do $BT/dexdump $f 2>/dev/null | grep -E "Class descriptor *: 'Landroid/(os|app)/" | sort -u | sed "s/^/$f: /"; done | head -40
+        echo "--- jars in the gradle cache that carry android/os/Process.class:"
+        find ~/.gradle/caches -name '*.jar' -size -20M 2>/dev/null | while read j; do unzip -l "$j" 2>/dev/null | grep -q ' android/os/Process.class$' && echo "$j"; done | head
     - name: Ship build log tail to the private drop (on failure)
       if: failure()
       env:
