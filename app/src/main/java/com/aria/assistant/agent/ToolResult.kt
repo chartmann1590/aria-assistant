@@ -18,7 +18,7 @@ sealed interface ToolResult {
                 is SkillResult.Failure -> Failure(result.reason)
                 is SkillResult.NeedsPermission -> NeedsPermission(result.capability)
                 is SkillResult.NeedsClarification -> NeedsClarification(result.question)
-                is SkillResult.RequiresPremium -> Say("That requires a Premium subscription.")
+                is SkillResult.RequiresPremium -> Say(if (com.aria.assistant.BuildConfig.STORE == "amazon") "Sorry, that isn't available in this version." else "That requires a Premium subscription.")
             }
         }
     }

@@ -38,13 +38,16 @@ class BillingManager @Inject constructor(
 
     init {
         scope.launch {
-            _isPremium.value = settingsRepository.isPremiumEnabled().first()
+            // Amazon Appstore build: no Play purchases, so never premium.
+            _isPremium.value = if (com.aria.assistant.BuildConfig.STORE == "amazon") false else settingsRepository.isPremiumEnabled().first()
         }
     }
 
     private lateinit var billingClient: BillingClient
 
     init {
+        // Amazon Appstore build: Google Play Billing is never started.
+        if (!(com.aria.assistant.BuildConfig.STORE == "amazon")) {
         billingClient = BillingClient.newBuilder(context)
             .setListener { billingResult, purchases ->
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
@@ -72,7 +75,10 @@ class BillingManager @Inject constructor(
         })
     }
 
+    }
+
     fun checkExistingPurchases() {
+        if (com.aria.assistant.BuildConfig.STORE == "amazon") return
         billingClient.queryPurchasesAsync(
             QueryPurchasesParams.newBuilder()
                 .setProductType(BillingClient.ProductType.SUBS)
@@ -118,6 +124,7 @@ class BillingManager @Inject constructor(
     }
 
     fun launchBillingFlow(activity: Activity, productId: String) {
+        if (com.aria.assistant.BuildConfig.STORE == "amazon") return
         queryProductDetailsAsync(productId) { productDetails ->
             if (productDetails == null) return@queryProductDetailsAsync
             val offerToken = productDetails.subscriptionOfferDetails?.firstOrNull()?.offerToken

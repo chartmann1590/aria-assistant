@@ -343,7 +343,8 @@ fun SettingsScreen(
                             )
                         )
                     }
-                    SettingRow(label = "Model", sub = if (voiceConfig.selectedModel == "E4B") "Gemma E4B (Premium)" else "Gemma E2B (Default)") {
+                    // Amazon Appstore build: the Premium-only E4B model switch is hidden (default E2B model only).
+                    if (!(com.aria.assistant.BuildConfig.STORE == "amazon")) SettingRow(label = "Model", sub = if (voiceConfig.selectedModel == "E4B") "Gemma E4B (Premium)" else "Gemma E2B (Default)") {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = voiceConfig.selectedModel,
@@ -418,7 +419,8 @@ fun SettingsScreen(
                 SectionLabel("Voice Selection")
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
                     Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                        viewModel.availableVoices.forEach { voice ->
+                        // Amazon Appstore build: Premium voices are not listed.
+                        viewModel.availableVoices.filter { !(com.aria.assistant.BuildConfig.STORE == "amazon") || !it.isPremium }.forEach { voice ->
                             VoiceItem(
                                 voice = voice,
                                 isPremium = isPremium,

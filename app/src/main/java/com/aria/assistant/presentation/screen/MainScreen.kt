@@ -184,7 +184,8 @@ fun MainScreen(
                             modifier = Modifier.size(19.dp)
                         )
                     }
-                    GlassIconButton(onClick = onNavigateToPremium) {
+                    // Amazon Appstore build: no Play purchases, so no Premium entry point.
+                    if (!(com.aria.assistant.BuildConfig.STORE == "amazon")) GlassIconButton(onClick = onNavigateToPremium) {
                         Icon(
                             Icons.Default.Star,
                             contentDescription = translatedUiText("Premium"),

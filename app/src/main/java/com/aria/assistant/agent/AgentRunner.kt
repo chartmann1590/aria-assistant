@@ -162,7 +162,7 @@ class AgentRunner @Inject constructor(
             }
 
             if (!featureGate.isAllowed(tool.name)) {
-                finalText = "That requires a Premium subscription."
+                finalText = if (com.aria.assistant.BuildConfig.STORE == "amazon") "Sorry, that isn't available in this version." else "That requires a Premium subscription."
                 break
             }
 

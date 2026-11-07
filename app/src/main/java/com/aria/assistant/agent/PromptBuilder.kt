@@ -36,6 +36,7 @@ class PromptBuilder @Inject constructor() {
             appendLine()
             appendLine("Available tools:")
             for (tool in tools) {
+                if ((com.aria.assistant.BuildConfig.STORE == "amazon") && tool.requiresPremium) continue // Amazon Appstore build: Premium tools are not offered
                 val premiumNote = if (tool.requiresPremium) " [PREMIUM]" else ""
                 appendLine("  - ${tool.name}$premiumNote: ${tool.description}")
                 appendLine("    Schema: ${tool.paramSchema}")
