@@ -27,8 +27,10 @@ wait 100
 tap (?i)^continue$
 wait 20
 shot 04-after-model
-tap (?i)^skip$
+tap (?i)^allow microphone access$
 wait 3
+taploop (?i)^(allow|ok|while using the app|only this time)$
+wait 2
 taploop (?i)^(allow|ok|while using the app|only this time|deny|don.t allow)$
 tap (?i)^skip$
 wait 3
