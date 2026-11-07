@@ -46,8 +46,7 @@ wait 4
 shot 10-paywall
 swipeup
 shot 10b-paywall-bottom
-swipedown
-tap (?i)^subscribe$
+scrollto (?i)^subscribe$
 wait 3
 shot 11-email
 type hartmannstudios@mail.tab.bot
