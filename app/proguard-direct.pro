@@ -4,3 +4,10 @@
 # in GoogleApiHandler; seen in the Amazon build). Never rename or strip anything in the android.* namespace.
 -keep class android.** { *; }
 -keepnames class android.** { *; }
+
+# LiteRT-LM (on-device Gemma): the native library calls back into JniMessageCallback/JniInferenceCallback by name over JNI.
+# R8 stripped those interface methods (0 methods in classes.dex of build 8), so the first chat message would end in
+# NoSuchMethodError (seen on the amazon branch). Keep the whole LiteRT/AI Edge namespace. Added 2026-11-07.
+-keep class com.google.ai.edge.** { *; }
+-keepnames class com.google.ai.edge.** { *; }
+-keep interface com.google.ai.edge.** { *; }

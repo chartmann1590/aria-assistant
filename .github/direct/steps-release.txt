@@ -41,6 +41,14 @@ wait 10
 adclose
 taploop (?i)^(allow|ok|while using the app|only this time)$
 shot 05-main
+tap (?i)^(type a message|message|ask aria).*
+wait 2
+type Hello
+tap (?i)^send$
+wait 120
+shot 05b-chat-reply
+wait 30
+shot 05c-chat-reply-2
 tap (?i)^premium$
 wait 4
 shot 10-paywall
