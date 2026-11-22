@@ -30,12 +30,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -72,11 +74,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.SecureFlagPolicy
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aria.assistant.data.feedback.BugReport
 import com.aria.assistant.data.feedback.GithubComment
@@ -500,6 +505,11 @@ fun SettingsScreen(
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
+
+                if (viewModel.playReviewAvailable) {
+                    PlayReviewerAccess(viewModel)
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
 
                 SectionLabel("More Apps")
                 GlassCard(modifier = Modifier.fillMaxWidth()) {
@@ -1245,3 +1255,51 @@ private fun outlinedFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedLabelColor = AuroraLavender,
     unfocusedLabelColor = TextTertiary
 )
+
+@Composable
+private fun PlayReviewerAccess(viewModel: SettingsViewModel) {
+    val active by viewModel.playReviewActive.collectAsState()
+    var open by remember { mutableStateOf(false) }
+    SectionLabel("Google Play reviewer access")
+    GlassCard(modifier = Modifier.fillMaxWidth()) {
+        SettingRow(
+            label = "Review access",
+            sub = if (active) "Pro review access is active for this session" else "For authorized Google Play reviewers"
+        ) {
+            TextButton(onClick = { if (active) viewModel.endPlayReview() else open = true }) {
+                Text(if (active) "End" else "Enter code")
+            }
+        }
+    }
+    if (!open) return
+
+    // Deliberately not saved in activity state or sent to a server.
+    var code by remember { mutableStateOf("") }
+    var rejected by remember { mutableStateOf(false) }
+    fun close() { code = ""; rejected = false; open = false }
+    AlertDialog(
+        onDismissRequest = { close() },
+        properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn),
+        title = { Text("Google Play reviewer access") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { if (it.length <= 44) { code = it; rejected = false } },
+                    label = { Text("Access code") },
+                    singleLine = true,
+                    isError = rejected,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                )
+                if (rejected) Text("That access code isn’t valid.")
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { if (viewModel.enterPlayReview(code)) close() else rejected = true }, enabled = code.isNotBlank()) {
+                Text("Unlock review access")
+            }
+        },
+        dismissButton = { TextButton(onClick = { close() }) { Text("Cancel") } }
+    )
+}

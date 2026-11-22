@@ -12,6 +12,7 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
+import com.aria.assistant.BuildConfig
 import com.aria.assistant.domain.repository.SettingsRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +22,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -32,7 +36,16 @@ class BillingManager @Inject constructor(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _isPremium = MutableStateFlow(false)
-    val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
+    private val playReviewAccess = PlayReviewAccess(BuildConfig.PLAY_REVIEW_VERIFIER_SHA256)
+    val playReviewAvailable: Boolean get() = playReviewAccess.isConfigured
+    val playReviewActive: StateFlow<Boolean> = playReviewAccess.active
+    val isPremium: StateFlow<Boolean> = if (playReviewAvailable) {
+        combine(_isPremium, playReviewActive) { purchased, reviewer -> purchased || reviewer }
+            .stateIn(scope, SharingStarted.Eagerly, false)
+    } else _isPremium.asStateFlow()
+
+    fun enterPlayReview(code: String): Boolean = playReviewAccess.enter(code)
+    fun endPlayReview() = playReviewAccess.end()
     private val _formattedPrices = MutableStateFlow<Map<String, String>>(emptyMap())
     val formattedPrices: StateFlow<Map<String, String>> = _formattedPrices.asStateFlow()
 

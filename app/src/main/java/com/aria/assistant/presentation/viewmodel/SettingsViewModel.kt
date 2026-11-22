@@ -44,6 +44,12 @@ class SettingsViewModel @Inject constructor(
     val voiceConfig: StateFlow<VoiceConfig> = _voiceConfig.asStateFlow()
 
     val isPremium: StateFlow<Boolean> = billingManager.isPremium
+    val playReviewAvailable: Boolean = billingManager.playReviewAvailable
+    val playReviewActive: StateFlow<Boolean> = billingManager.playReviewActive
+
+    fun enterPlayReview(code: String): Boolean = billingManager.enterPlayReview(code)
+    fun endPlayReview() = billingManager.endPlayReview()
+
     val privacyOptionsRequired: StateFlow<Boolean> = adManager.privacyOptionsRequired
 
     val availableVoices: List<VoiceInfo> = voiceModelManager.availableVoices
