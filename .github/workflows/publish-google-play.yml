@@ -7,7 +7,6 @@ on:
         description: 'Type "verify-only" to build and verify a signed candidate with no publishing rights'
         required: true
         type: string
-        type: string
 
 permissions:
   contents: read
