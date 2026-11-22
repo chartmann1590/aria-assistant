@@ -142,6 +142,9 @@ jobs:
           assert x.get('package')=='com.aria.assistant', 'Wrong Android package'
           assert x.get(J+'versionCode')==os.environ['ANDROID_VERSION_CODE'], 'Wrong version code'
           assert x.get(J+'versionName')==os.environ['ANDROID_VERSION_NAME'], 'Wrong version name'
+          wifi_features=[i for i in x.findall('uses-feature') if i.get(J+'name')=='android.hardware.wifi']
+          assert len(wifi_features)==1 and wifi_features[0].get(J+'required')=='false', 'Wi-Fi must be optional in the signed manifest'
+          assert int(x.get(J+'versionCode'))>263260059, 'Must supersede the uploaded Wifi-gated build'
           assert x.find('uses-sdk').get(J+'targetSdkVersion')=='36', 'Wrong SDK'
           a=x.find('application'); assert a.get(J+'debuggable','false').lower()=='false', 'Debug app'
           perms={p.get(J+'name') for p in x.findall('uses-permission')}; services={p.get(J+'name') for p in a.findall('service')}

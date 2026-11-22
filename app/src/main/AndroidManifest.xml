@@ -62,6 +62,8 @@
 
     <uses-feature android:name="android.hardware.telephony" android:required="false" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Permit installs on devices without a Wi-Fi radio (offline use or another network). -->
+    <uses-feature android:name="android.hardware.wifi" android:required="false" />
 
     <queries>
         <intent>
