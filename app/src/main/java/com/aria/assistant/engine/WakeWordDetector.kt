@@ -145,22 +145,33 @@ class WakeWordDetector @Inject constructor(
     private var activeNeuralThreshold: Float? = null
 
     private fun startEnergyFallback(onDetected: () -> Unit) {
-        audioRecord = AudioRecord(
-            MediaRecorder.AudioSource.MIC,
-            sampleRate,
-            AudioFormat.CHANNEL_IN_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-            bufferSize
-        )
+        // The permission can change while the neural backend is starting.
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED
+        ) return
 
-        if (audioRecord?.state != AudioRecord.STATE_INITIALIZED) {
-            AriaLogger.e("WakeWordDetector", "AudioRecord init failed")
+        try {
+            val recorder = AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                sampleRate,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+                bufferSize
+            )
+            audioRecord = recorder
+            if (recorder.state != AudioRecord.STATE_INITIALIZED) {
+                AriaLogger.e("WakeWordDetector", "AudioRecord init failed")
+                cleanup()
+                return
+            }
+            recorder.startRecording()
+        } catch (_: SecurityException) {
+            // Android can revoke permission between the check and startRecording().
             cleanup()
             return
         }
 
         fallbackScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-        audioRecord!!.startRecording()
         _usingNeural.value = false
         _isListening.value = true
         AriaLogger.d("WakeWordDetector", "Listening (energy mode)")

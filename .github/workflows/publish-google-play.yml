@@ -29,7 +29,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-          ref: 89bf86eb4c431f9dd9820eec7bdfc6da750ab4a4
+          ref: 188d877815f4bc94a64af4d3383b8ded8df3bf2d
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
@@ -115,7 +115,7 @@ jobs:
       - name: Verify exact signed bundle and seal for private review
         shell: bash
         env:
-          ARIA_SOURCE: 89bf86eb4c431f9dd9820eec7bdfc6da750ab4a4
+          ARIA_SOURCE: 188d877815f4bc94a64af4d3383b8ded8df3bf2d
         run: |
           umask 077
           ROOT="$RUNNER_TEMP/aria-play-verify"
@@ -125,6 +125,8 @@ jobs:
           printf '%s  %s\n' '378b5434cd1378bef6b2bc527b8c7f0ff2584b273830335bce54d6d0813c8584' "$ROOT/bundletool.jar" | sha256sum -c -
           java -jar "$ROOT/bundletool.jar" validate --bundle="$BUNDLE" > "$ROOT/bundletool-output.txt"
           java -jar "$ROOT/bundletool.jar" dump manifest --bundle="$BUNDLE" --module=base > "$ROOT/manifest.xml"
+          java -jar "$ROOT/bundletool.jar" dump config --bundle="$BUNDLE" > "$ROOT/bundle-config.txt"
+          grep -q PAGE_ALIGNMENT_16K "$ROOT/bundle-config.txt"
           jarsigner -verify "$BUNDLE" > "$ROOT/jar-verification.txt"
           grep -q 'jar verified' "$ROOT/jar-verification.txt"
           keytool -printcert -jarfile "$BUNDLE" > "$ROOT/upload.cert"
@@ -149,8 +151,16 @@ jobs:
           sha=fp[0].replace(':','').lower(); assert len(sha)==64
           z=zipfile.ZipFile(f); libs=[p for p in z.namelist() if re.match(r'^base/lib/[^/]+/[^/]+\.so$',p)]; signed=[p for p in z.namelist() if re.match(r'^META-INF/[^/]+\.(?:RSA|EC|DSA)$',p)]; assert len(signed)==1
           assert z.testzip() is None and libs and any('/arm64-v8a/' in p for p in libs), 'Bad archive or missing 64-bit libraries'
+          import shutil, tempfile
+          for p in libs:
+              if p.split('/')[2] not in ('arm64-v8a', 'x86_64'): continue
+              with tempfile.NamedTemporaryFile(dir=root) as elf, z.open(p) as src:
+                  shutil.copyfileobj(src, elf, length=524288); elf.flush()
+                  elfmap=subprocess.check_output(['readelf','--wide','--program-headers',elf.name],text=True,timeout=15)
+                  align=[int(s.split()[-1],16) for s in elfmap.splitlines() if s.strip().startswith('LOAD ')]
+                  assert align and all(a >= 0x4000 for a in align), 'Unaligned native ELF: '+p
           assert os.environ['ARIA_SOURCE']==subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(), 'Wrong source revision'
-          with open(root+'/verification.json','w') as out: json.dump({'source':os.environ['ARIA_SOURCE'],'package':x.get('package'),'version_code':int(x.get(J+'versionCode')),'version_name':x.get(J+'versionName'),'target':36,'play_billing':billing,'upload_cert_sha256':sha,'abi_names':sorted({p.split('/')[2] for p in libs}),'test_and_lint_job_passed':True,'scope':'signed build, no Play upload'},out)
+          with open(root+'/verification.json','w') as out: json.dump({'source':os.environ['ARIA_SOURCE'],'package':x.get('package'),'version_code':int(x.get(J+'versionCode')),'version_name':x.get(J+'versionName'),'target':36,'play_billing':billing,'upload_cert_sha256':sha,'abi_names':sorted({p.split('/')[2] for p in libs}),'test_and_lint_job_passed':True,'supports_16kb':True,'scope':'signed build, no Play upload'},out)
           PY
           node --input-type=module - <<'JS'
           import {createReadStream,createWriteStream} from 'node:fs';
@@ -159,8 +169,8 @@ jobs:
           import {pipeline} from 'node:stream/promises';
           const path='app/build/outputs/bundle/release/app-release.aab';
           const root=process.env.RUNNER_TEMP+'/aria-play-verify';
-          const src='89bf86eb4c431f9dd9820eec7bdfc6da750ab4a4';
-          const pub="-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAo9WYxy9+aS4e3Cc/MztD\nUCGCdVPvfobNZevTLPrqwCgEbGyHZjO191leawaCmFSpjsOkmQUUI9ZDe6O4IW2M\nsxNP7hIQFQfAFO5ZWkq+Op8Re7z+hsIa0G/pdWWz1BhSovkM8EQK7DamzT9tzHIz\nqKIFYlvpp/5/C/l016Boq650dC6QMHcFBNKx2+P5Z2n9ex0qI4UWIouznTGMMZ1L\n8e1A504c3cAhBc/WKNHG/rCiDbPjTv7fo0p4GY5ELVM4ydcvwSlCKbOLCh68txXI\nGCXl1kfHn8w9X2qemHtMrzhzpgP+ZZkR0tS/wruUBPAM1gF0tSBdSMhJwpsT4djt\nk1vJAmrAVPaiGkjEcAHT8D9QMesq4De7OpzqPcAOLiHQrQ0e/U/3/2AoHZXDROPN\ndB/L7B52Ahd8B5DQkqMvpNRmV4t+oyRshKk+xqLr2CclyVAnXf+BhbjXjZGmz/0u\nUd8VxvEXvXvFBntMHLOGEQxug2xe2gZMf4juRiwMy/fTAgMBAAE=\n-----END PUBLIC KEY-----\n";
+          const src='188d877815f4bc94a64af4d3383b8ded8df3bf2d';
+          const pub="-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAy7raU/P0Lnw7R2/2acf7\nY9vq6hd7R242FD5vm3wFqc9eZPQpvG7hwapp3realn0wQyA4Ls+Gk2nK726Ggllo\nbDwZjM7oCVOCdiGw7xFZ4fWu970WiKMdwCb3q4oIaPz0p6sMWOIih6qEFIN7gKAK\nEdYyMCavk5+KpvF+w7LIGPHoB6LUvMyZt0PZ/WaUMInS8KJ2oMuQ/eZyo+Zf2Ec7\nToebqq6WzorkYivqEZFSZSjw26fkC8+Y6qUOJ42ki5vWXZbOdPOZeFrC2v9mNWgq\nDxX9IxAaaUpXCVWpheDg2lPAX01zJhOBvlvtNJDg4v3nbqZ7uyX2Mtvt7fEI6BWD\nb2uvuzZPT+mHvrlY7/5K1wq3YPO1vcdE8ZpEp3s0la+H844IPhXtYI/8CeZoJh7M\nx9MgNMnNJ3kIJaqNmzUBkLiegnVWxOUP4r/LudMZx7A6daHf21u/61HAdSQKM1Fd\nLfFJgeGv71Eu8vcziZ6u7/RUpNfvyV0jjw/f75OoXbsbAgMBAAE=\n-----END PUBLIC KEY-----\n";
           const key=randomBytes(32), iv=randomBytes(12);
           const metadata=JSON.parse(await readFile(root+'/verification.json','utf8'));
           if(metadata.source!==src || metadata.package!=='com.aria.assistant') throw Error('release identity mismatch');
