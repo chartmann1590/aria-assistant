@@ -11,6 +11,9 @@ on:
 permissions:
   contents: read
 
+env:
+  ARIA_PLAY_REVIEW_VERIFIER_SHA256: "96187cd9e9c791ec639ae28a8e366e94f62d635d6a65d7e94943d631ff482f3b"
+
 jobs:
   publish:
     name: Verify exact source and build a signed candidate without publishing
@@ -29,7 +32,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-          ref: 188d877815f4bc94a64af4d3383b8ded8df3bf2d
+          ref: b183fe2d595b739bf2fcde3f1ec995fd2c4080e2
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
@@ -115,7 +118,7 @@ jobs:
       - name: Verify exact signed bundle and seal for private review
         shell: bash
         env:
-          ARIA_SOURCE: 188d877815f4bc94a64af4d3383b8ded8df3bf2d
+          ARIA_SOURCE: b183fe2d595b739bf2fcde3f1ec995fd2c4080e2
         run: |
           umask 077
           ROOT="$RUNNER_TEMP/aria-play-verify"
@@ -159,8 +162,11 @@ jobs:
                   elfmap=subprocess.check_output(['readelf','--wide','--program-headers',elf.name],text=True,timeout=15)
                   align=[int(s.split()[-1],16) for s in elfmap.splitlines() if s.strip().startswith('LOAD ')]
                   assert align and all(a >= 0x4000 for a in align), 'Unaligned native ELF: '+p
+          verifier=os.environ['ARIA_PLAY_REVIEW_VERIFIER_SHA256'].encode('ascii')
+          ds=[p for p in z.namelist() if re.match(r'^base/dex/classes(?:[0-9]+)?\.dex$',p)]
+          assert re.fullmatch(rb'[0-9a-f]{64}',verifier) and ds and any(verifier in z.read(p) for p in ds), 'Private reviewer verifier missing from exact release DEX'
           assert os.environ['ARIA_SOURCE']==subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(), 'Wrong source revision'
-          with open(root+'/verification.json','w') as out: json.dump({'source':os.environ['ARIA_SOURCE'],'package':x.get('package'),'version_code':int(x.get(J+'versionCode')),'version_name':x.get(J+'versionName'),'target':36,'play_billing':billing,'upload_cert_sha256':sha,'abi_names':sorted({p.split('/')[2] for p in libs}),'test_and_lint_job_passed':True,'supports_16kb':True,'scope':'signed build, no Play upload'},out)
+          with open(root+'/verification.json','w') as out: json.dump({'source':os.environ['ARIA_SOURCE'],'package':x.get('package'),'version_code':int(x.get(J+'versionCode')),'version_name':x.get(J+'versionName'),'target':36,'play_billing':billing,'upload_cert_sha256':sha,'abi_names':sorted({p.split('/')[2] for p in libs}),'test_and_lint_job_passed':True,'supports_16kb':True,'review_verifier_sha256':verifier.decode('ascii'),'scope':'signed build, no Play upload'},out)
           PY
           node --input-type=module - <<'JS'
           import {createReadStream,createWriteStream} from 'node:fs';
@@ -169,8 +175,8 @@ jobs:
           import {pipeline} from 'node:stream/promises';
           const path='app/build/outputs/bundle/release/app-release.aab';
           const root=process.env.RUNNER_TEMP+'/aria-play-verify';
-          const src='188d877815f4bc94a64af4d3383b8ded8df3bf2d';
-          const pub="-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAy7raU/P0Lnw7R2/2acf7\nY9vq6hd7R242FD5vm3wFqc9eZPQpvG7hwapp3realn0wQyA4Ls+Gk2nK726Ggllo\nbDwZjM7oCVOCdiGw7xFZ4fWu970WiKMdwCb3q4oIaPz0p6sMWOIih6qEFIN7gKAK\nEdYyMCavk5+KpvF+w7LIGPHoB6LUvMyZt0PZ/WaUMInS8KJ2oMuQ/eZyo+Zf2Ec7\nToebqq6WzorkYivqEZFSZSjw26fkC8+Y6qUOJ42ki5vWXZbOdPOZeFrC2v9mNWgq\nDxX9IxAaaUpXCVWpheDg2lPAX01zJhOBvlvtNJDg4v3nbqZ7uyX2Mtvt7fEI6BWD\nb2uvuzZPT+mHvrlY7/5K1wq3YPO1vcdE8ZpEp3s0la+H844IPhXtYI/8CeZoJh7M\nx9MgNMnNJ3kIJaqNmzUBkLiegnVWxOUP4r/LudMZx7A6daHf21u/61HAdSQKM1Fd\nLfFJgeGv71Eu8vcziZ6u7/RUpNfvyV0jjw/f75OoXbsbAgMBAAE=\n-----END PUBLIC KEY-----\n";
+          const src='b183fe2d595b739bf2fcde3f1ec995fd2c4080e2';
+          const pub="-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA2XqgVw6KJYUz/QdmartS\nADIchmhiFrJR1rDgDgFQrEpvdPNwxc3IkFcDsIVhd/2+32lO/yfpJio5orfw+CW1\nHVn726fM/qywxXrFhANG47N0h/TsZsdqlh6S/HsfoYaMq9riHvWbnGhbb5fAUKAp\nJV3K3pW/XcE1qsf5LJlr9paIcDdrMyFUhD8hfOnXvgro1WvzZavdKwqLq4dze5d1\neoY7iE/pY/lpHY5lNhJHoBWks0huli53liH3FYmglp4oXPY8dp4S7u0A6x4YIDsx\nMHFhi2WWZ+LBrnjW2MFAh7jIGLRXH5+GC/fnVLLWOtCieDtM0yfI15Wqop4Nx+Rp\n1Sltdwihzqt0cAm1I2dKlcDkbBKUDFZSXwbsYYaOxFujgb7o0h/9lrLdtKVdwLhX\nZzgn4vmgZ1U4ExDWrHC2CNnAyV98w+o208km+Z3Eosh3ZR8Ar9WQ89V4ZR8X3u8I\n7jZffR5yeQgzEOU/UcOWDFxwFw+fm+1gIGuW2bUV+uLjAgMBAAE=\n-----END PUBLIC KEY-----\n";
           const key=randomBytes(32), iv=randomBytes(12);
           const metadata=JSON.parse(await readFile(root+'/verification.json','utf8'));
           if(metadata.source!==src || metadata.package!=='com.aria.assistant') throw Error('release identity mismatch');

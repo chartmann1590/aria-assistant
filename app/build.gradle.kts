@@ -51,6 +51,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
+        buildConfigField("String", "PLAY_REVIEW_VERIFIER_SHA256", "\"\"")
         applicationId = "com.aria.assistant"
         minSdk = 26
         targetSdk = 36
@@ -122,6 +123,11 @@ android {
             isDebuggable = false
             buildConfigField("boolean", "ENABLE_ACCESSIBILITY_AUTOMATION", "false")
             buildConfigField("boolean", "ENABLE_RESTRICTED_MESSAGING", "false")
+            // Set only on the verified Play build. The access code is never in Gradle or CI.
+            val reviewVerifier = providers.environmentVariable("ARIA_PLAY_REVIEW_VERIFIER_SHA256").orNull.orEmpty()
+            require(reviewVerifier.isEmpty() || reviewVerifier.matches(Regex("[0-9a-f]{64}"))) { "Invalid Play review verifier" }
+            buildConfigField("String", "PLAY_REVIEW_VERIFIER_SHA256", "\"$reviewVerifier\"")
+
             // Never package a GitHub credential in a distributable APK/AAB.
             buildConfigField("String", "GITHUB_API_TOKEN", "\"\"")
             signingConfigs.findByName("release")?.let { signingConfig = it }
