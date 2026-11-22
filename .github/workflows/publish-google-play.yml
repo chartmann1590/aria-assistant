@@ -1,15 +1,12 @@
-name: Publish to Google Play
+name: Aria original Play signed verification only
 
 on:
   workflow_dispatch:
     inputs:
       confirm_play_publish:
-        description: 'Type "publish" to confirm a full production release (100% rollout, no draft)'
+        description: 'Type "verify-only" to build and verify a signed candidate with no publishing rights'
         required: true
         type: string
-      release_notes:
-        description: "Optional release notes"
-        required: false
         type: string
 
 permissions:
@@ -17,20 +14,23 @@ permissions:
 
 jobs:
   publish:
-    name: Build and upload production draft
+    name: Verify exact source and build a signed candidate without publishing
+    timeout-minutes: 12
     runs-on: ubuntu-latest
 
     steps:
-      - name: Require explicit publish confirmation
-        if: ${{ inputs.confirm_play_publish != 'publish' }}
+      - name: Require build-only confirmation
+        if: ${{ inputs.confirm_play_publish != 'verify-only' }}
         run: |
-          echo 'Publishing was not confirmed. Enter exactly: publish'
+          echo 'Build-only mode was not confirmed. Enter exactly: verify-only'
           exit 1
 
       - name: Check out source
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
+          ref: 89bf86eb4c431f9dd9820eec7bdfc6da750ab4a4
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
@@ -44,9 +44,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Verify required publishing secrets
+      - name: Verify required build inputs
         env:
-          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
           RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
@@ -59,7 +58,7 @@ jobs:
           GH_REPO_NAME: ${{ secrets.GH_REPO_NAME }}
         run: |
           missing=0
-          for name in GOOGLE_PLAY_SERVICE_ACCOUNT_JSON GOOGLE_SERVICES_JSON RELEASE_KEYSTORE RELEASE_KEYSTORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD ADMOB_APP_ID ADMOB_BANNER_AD_UNIT_ID ADMOB_INTERSTITIAL_AD_UNIT_ID GH_REPO_OWNER GH_REPO_NAME; do
+          for name in GOOGLE_SERVICES_JSON RELEASE_KEYSTORE RELEASE_KEYSTORE_PASSWORD RELEASE_KEY_ALIAS RELEASE_KEY_PASSWORD ADMOB_APP_ID ADMOB_BANNER_AD_UNIT_ID ADMOB_INTERSTITIAL_AD_UNIT_ID GH_REPO_OWNER GH_REPO_NAME; do
             if [ -z "${!name}" ]; then
               echo "Required secret is missing: $name"
               missing=1
@@ -80,6 +79,7 @@ jobs:
           GH_REPO_OWNER: ${{ secrets.GH_REPO_OWNER }}
           GH_REPO_NAME: ${{ secrets.GH_REPO_NAME }}
         run: |
+          umask 077
           printf '%s' "$GOOGLE_SERVICES_JSON" > app/google-services.json
           printf '%s' "$RELEASE_KEYSTORE" | base64 --decode > app/release-upload.jks
           {
@@ -113,43 +113,85 @@ jobs:
       - name: Build signed release bundle
         run: ./gradlew bundleRelease
 
-      - name: Generate Play release notes
-        env:
-          RELEASE_NOTES: ${{ inputs.release_notes }}
+      - name: Verify exact signed bundle and seal for private review
         shell: bash
+        env:
+          ARIA_SOURCE: 89bf86eb4c431f9dd9820eec7bdfc6da750ab4a4
         run: |
-          mkdir -p distribution/whatsnew
-          notes_file='distribution/whatsnew/whatsnew-en-US'
-          if [ -n "$RELEASE_NOTES" ]; then
-            printf '%s\n' "$RELEASE_NOTES" > "$notes_file"
-          else
-            previous_tag="$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || true)"
-            if [ -n "$previous_tag" ]; then
-              git log --pretty='- %s' "$previous_tag"..HEAD > "$notes_file"
-            elif [ -f listing/whats_new.txt ]; then
-              cp listing/whats_new.txt "$notes_file"
-            else
-              git log --pretty='- %s' -20 > "$notes_file"
-            fi
-            if [ ! -s "$notes_file" ]; then
-              printf '%s\n' 'Bug fixes and performance improvements.' > "$notes_file"
-            fi
-          fi
+          umask 077
+          ROOT="$RUNNER_TEMP/aria-play-verify"
+          mkdir -m 700 "$ROOT"
+          BUNDLE=app/build/outputs/bundle/release/app-release.aab
+          curl --fail --silent --show-error --location --max-time 45 --proto '=https' 'https://github.com/google/bundletool/releases/download/1.18.2/bundletool-all-1.18.2.jar' -o "$ROOT/bundletool.jar"
+          printf '%s  %s\n' '378b5434cd1378bef6b2bc527b8c7f0ff2584b273830335bce54d6d0813c8584' "$ROOT/bundletool.jar" | sha256sum -c -
+          java -jar "$ROOT/bundletool.jar" validate --bundle="$BUNDLE" > "$ROOT/bundletool-output.txt"
+          java -jar "$ROOT/bundletool.jar" dump manifest --bundle="$BUNDLE" --module=base > "$ROOT/manifest.xml"
+          jarsigner -verify "$BUNDLE" > "$ROOT/jar-verification.txt"
+          grep -q 'jar verified' "$ROOT/jar-verification.txt"
+          keytool -printcert -jarfile "$BUNDLE" > "$ROOT/upload.cert"
+          python3 - <<'PY'
+          import json, os, re, sys, xml.etree.ElementTree as E, zipfile, subprocess
+          root=os.environ['RUNNER_TEMP']+'/aria-play-verify'
+          f='app/build/outputs/bundle/release/app-release.aab'
+          J='{http://schemas.android.com/apk/res/android}'
+          x=E.parse(root+'/manifest.xml').getroot()
+          assert x.get('package')=='com.aria.assistant', 'Wrong Android package'
+          assert x.get(J+'versionCode')==os.environ['ANDROID_VERSION_CODE'], 'Wrong version code'
+          assert x.get(J+'versionName')==os.environ['ANDROID_VERSION_NAME'], 'Wrong version name'
+          assert x.find('uses-sdk').get(J+'targetSdkVersion')=='36', 'Wrong SDK'
+          a=x.find('application'); assert a.get(J+'debuggable','false').lower()=='false', 'Debug app'
+          perms={p.get(J+'name') for p in x.findall('uses-permission')}; services={p.get(J+'name') for p in a.findall('service')}
+          assert not any(p.split('.')[-1] in ('READ_SMS','SEND_SMS','RECEIVE_SMS','READ_CALL_LOG','WRITE_CALL_LOG') for p in perms), 'Restricted permission survived'
+          assert not any('AriaAccessibilityService' in n for n in services), 'Accessibility service survived'
+          billing=next((p.get(J+'value') for p in a.findall('meta-data') if p.get(J+'name')=='com.google.android.play.billingclient.version'), '')
+          assert billing=='8.3.0', 'Unexpected Play Billing dependency'
+          sig=open(root+'/upload.cert',encoding='utf-8').read(); assert 'Signer #1:' in sig and 'Signer #2:' not in sig, 'Expected exactly one upload signer'
+          fp=re.findall(r'(?m)^\s*SHA256:\s*([A-F0-9:]{95})\s*$',sig); assert len(fp)==1, 'Could not identify upload signer'
+          sha=fp[0].replace(':','').lower(); assert len(sha)==64
+          z=zipfile.ZipFile(f); libs=[p for p in z.namelist() if re.match(r'^base/lib/[^/]+/[^/]+\.so$',p)]; signed=[p for p in z.namelist() if re.match(r'^META-INF/[^/]+\.(?:RSA|EC|DSA)$',p)]; assert len(signed)==1
+          assert z.testzip() is None and libs and any('/arm64-v8a/' in p for p in libs), 'Bad archive or missing 64-bit libraries'
+          assert os.environ['ARIA_SOURCE']==subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(), 'Wrong source revision'
+          with open(root+'/verification.json','w') as out: json.dump({'source':os.environ['ARIA_SOURCE'],'package':x.get('package'),'version_code':int(x.get(J+'versionCode')),'version_name':x.get(J+'versionName'),'target':36,'play_billing':billing,'upload_cert_sha256':sha,'abi_names':sorted({p.split('/')[2] for p in libs}),'test_and_lint_job_passed':True,'scope':'signed build, no Play upload'},out)
+          PY
+          node --input-type=module - <<'JS'
+          import {createReadStream,createWriteStream} from 'node:fs';
+          import {writeFile,readFile,stat,appendFile} from 'node:fs/promises';
+          import {createHash,createCipheriv,publicEncrypt,constants,randomBytes} from 'node:crypto';
+          import {pipeline} from 'node:stream/promises';
+          const path='app/build/outputs/bundle/release/app-release.aab';
+          const root=process.env.RUNNER_TEMP+'/aria-play-verify';
+          const src='89bf86eb4c431f9dd9820eec7bdfc6da750ab4a4';
+          const pub="-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAo9WYxy9+aS4e3Cc/MztD\nUCGCdVPvfobNZevTLPrqwCgEbGyHZjO191leawaCmFSpjsOkmQUUI9ZDe6O4IW2M\nsxNP7hIQFQfAFO5ZWkq+Op8Re7z+hsIa0G/pdWWz1BhSovkM8EQK7DamzT9tzHIz\nqKIFYlvpp/5/C/l016Boq650dC6QMHcFBNKx2+P5Z2n9ex0qI4UWIouznTGMMZ1L\n8e1A504c3cAhBc/WKNHG/rCiDbPjTv7fo0p4GY5ELVM4ydcvwSlCKbOLCh68txXI\nGCXl1kfHn8w9X2qemHtMrzhzpgP+ZZkR0tS/wruUBPAM1gF0tSBdSMhJwpsT4djt\nk1vJAmrAVPaiGkjEcAHT8D9QMesq4De7OpzqPcAOLiHQrQ0e/U/3/2AoHZXDROPN\ndB/L7B52Ahd8B5DQkqMvpNRmV4t+oyRshKk+xqLr2CclyVAnXf+BhbjXjZGmz/0u\nUd8VxvEXvXvFBntMHLOGEQxug2xe2gZMf4juRiwMy/fTAgMBAAE=\n-----END PUBLIC KEY-----\n";
+          const key=randomBytes(32), iv=randomBytes(12);
+          const metadata=JSON.parse(await readFile(root+'/verification.json','utf8'));
+          if(metadata.source!==src || metadata.package!=='com.aria.assistant') throw Error('release identity mismatch');
+          const st=await stat(path); if(st.size<100000 || st.size>400000000) throw Error('candidate size outside verification range');
+          const crypt=createCipheriv('aes-256-gcm',key,iv);
+          crypt.setAAD(Buffer.from(src+':'+metadata.version_code));
+          const out=root+'/candidate.aab.aes-256-gcm';
+          const h=createHash('sha256');
+          const r=createReadStream(path); r.on('data', part=>h.update(part));
+          await pipeline(r,crypt,createWriteStream(out,{mode:0o600,flags:'wx'}));
+          const wrapped=publicEncrypt({key:pub,padding:constants.RSA_PKCS1_OAEP_PADDING,oaepHash:'sha256'},key); key.fill(0);
+          metadata.sha256=h.digest('hex'); metadata.bytes=st.size;
+          metadata.iv=iv.toString('base64'); metadata.tag=crypt.getAuthTag().toString('base64');
+          metadata.wrapped_key=wrapped.toString('base64');
+          await writeFile(root+'/verification.json',JSON.stringify(metadata)+'\n',{mode:0o600});
+          await appendFile(process.env.GITHUB_STEP_SUMMARY,'Original Aria signed candidate verified and sealed. No Play upload or submission.\n');
+          JS
 
-      - name: Upload release bundle artifact
+      - name: Retain only encrypted release bundle and verification facts
         uses: actions/upload-artifact@v4
         with:
-          name: aria-production-${{ env.ANDROID_VERSION_CODE }}
-          path: app/build/outputs/bundle/release/app-release.aab
+          name: aria-exact-signed-private-verify
+          path: |
+            ${{ runner.temp }}/aria-play-verify/candidate.aab.aes-256-gcm
+            ${{ runner.temp }}/aria-play-verify/verification.json
           if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
 
-      - name: Upload production draft to Google Play
-        uses: r0adkll/upload-google-play@v1.1.5
-        with:
-          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: com.aria.assistant
-          releaseFiles: app/build/outputs/bundle/release/app-release.aab
-          tracks: production
-          status: completed
-          whatsNewDirectory: distribution/whatsnew
-          mappingFile: app/build/outputs/mapping/release/mapping.txt
+      - name: Clear signing material from ephemeral build directory
+        if: ${{ always() }}
+        shell: bash
+        run: rm -f -- app/release-upload.jks app/google-services.json keystore.properties local.properties
