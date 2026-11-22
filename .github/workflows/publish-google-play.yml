@@ -32,7 +32,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-          ref: b183fe2d595b739bf2fcde3f1ec995fd2c4080e2
+          ref: d9e09e431f1ee490a97875c14f88c7b71c52118b
 
       - name: Make Gradle wrapper executable
         run: chmod +x gradlew
@@ -118,7 +118,7 @@ jobs:
       - name: Verify exact signed bundle and seal for private review
         shell: bash
         env:
-          ARIA_SOURCE: b183fe2d595b739bf2fcde3f1ec995fd2c4080e2
+          ARIA_SOURCE: d9e09e431f1ee490a97875c14f88c7b71c52118b
         run: |
           umask 077
           ROOT="$RUNNER_TEMP/aria-play-verify"
@@ -178,7 +178,7 @@ jobs:
           import {pipeline} from 'node:stream/promises';
           const path='app/build/outputs/bundle/release/app-release.aab';
           const root=process.env.RUNNER_TEMP+'/aria-play-verify';
-          const src='b183fe2d595b739bf2fcde3f1ec995fd2c4080e2';
+          const src='d9e09e431f1ee490a97875c14f88c7b71c52118b';
           const pub="-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAzYdY0lFn7ELTTUysiu+p\nZ7O8v0aDTtvE1M5mM35cgNvW3bI6HBZHi91gcRdYaN+6QvGweiBykyW4aV1nGiic\nhD/qMtK9YVkilCUjajRrkiW+IgxC+b1no/UxcjQoFDEKXfFlP+xh2WHfuZN3jXDB\nvxv6jiY9olAjaSu03cSvahV6P3z7uV887fYPJru9l8M9DwzORWRdrzPCR+HXF22N\naSQnQHi+gxVkGZugZuVmPEBNqqdIbB5qRaYLIuZd0zIhr3e+4GZ6rb0fT6QV1dCR\nGzhyXb6QQIYplE5CDzf/fyjaCFAIKCFlaEFjs28yOCdsjA3viCcF3bf3Wn/VUsts\nyTXSRsKqknWy9aK4CiGP9GXN4ytiqFYUI+eIlwclA4e81bCUXWQUgAmeXlsEBXoC\nC7l4LxpYY0ShrVqNJ0olm3hsfP6N0MhBwtmRYhJ86S6gb+LCDYs+ba7AJdj2NjUP\nJ4/WgwxoBlHEWcIM8mNXmfLRT/9lkCzl03AW5xwa2/p1AgMBAAE=\n-----END PUBLIC KEY-----\n";
           const key=randomBytes(32), iv=randomBytes(12);
           const metadata=JSON.parse(await readFile(root+'/verification.json','utf8'));
